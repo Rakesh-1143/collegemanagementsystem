@@ -1,60 +1,56 @@
 import { createTheme } from "@mui/material/styles";
 
-/**
- * College-ERP design system (MUI theme)
- * -------------------------------------
- * Violet  -> primary actions / brand
- * Pink    -> secondary accents / highlights
- * Blue    -> informational
- * Green   -> success / active
- * Orange  -> warnings / pending
- * Red     -> errors / danger
- * Neutrals -> backgrounds, text, borders
- */
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#7c3aed",
-      light: "#a78bfa",
-      dark: "#6d28d9",
+      main: "#4f46e5", // Indigo-600
+      light: "#818cf8", // Indigo-400
+      dark: "#3730a3", // Indigo-800
       contrastText: "#ffffff",
     },
     secondary: {
-      main: "#ec4899",
-      light: "#f9a8d4",
-      dark: "#db2777",
+      main: "#64748b", // Slate-500
+      light: "#94a3b8", // Slate-400
+      dark: "#334155", // Slate-700
       contrastText: "#ffffff",
     },
-    info: { main: "#3b82f6", contrastText: "#ffffff" },
-    success: { main: "#22c55e", contrastText: "#ffffff" },
-    warning: { main: "#f59e0b", contrastText: "#ffffff" },
-    error: { main: "#ef4444", contrastText: "#ffffff" },
+    error: {
+      main: "#ef4444", // Red-500
+    },
+    warning: {
+      main: "#f59e0b", // Amber-500
+    },
+    info: {
+      main: "#3b82f6", // Blue-500
+    },
+    success: {
+      main: "#10b981", // Emerald-500
+    },
     background: {
-      default: "#faf8ff",
+      default: "#f8fafc",
       paper: "#ffffff",
     },
     text: {
-      primary: "#1e293b",
-      secondary: "#64748b",
+      primary: "#1e293b", // Slate-800
+      secondary: "#64748b", // Slate-500
     },
-    divider: "#e8e4f2",
-  },
-  shape: {
-    borderRadius: 12,
+    divider: "#e2e8f0",
   },
   typography: {
-    fontFamily:
-      '"Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
+    h1: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+    h2: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+    h3: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+    h4: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+    h5: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
+    h6: { fontFamily: '"Outfit", sans-serif', fontWeight: 600 },
     button: {
       textTransform: "none",
-      fontWeight: 600,
+      fontWeight: 500,
     },
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 700 },
-    h4: { fontWeight: 700 },
-    h5: { fontWeight: 700 },
-    h6: { fontWeight: 600 },
+  },
+  shape: {
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
@@ -63,24 +59,84 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 10,
-          paddingLeft: 20,
-          paddingRight: 20,
-          transition:
-            "transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease",
+          borderRadius: 8,
+          boxShadow: "none",
+          transition: "background-color 0.15s ease, border-color 0.15s ease",
           "&:hover": {
-            boxShadow: "0 10px 24px rgba(124, 58, 237, 0.25)",
-            transform: "translateY(-1px)",
+            boxShadow: "none",
           },
+        },
+        containedPrimary: {
+          "&:hover": {
+            backgroundColor: "#4338ca", // Indigo-700
+          },
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#ffffff",
+          borderRadius: 8,
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#e2e8f0", // Slate-200
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#cbd5e1", // Slate-300
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#6366f1", // Indigo-500
+            borderWidth: "1px",
+            boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.1)",
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: "#475569", // Slate-600
+          fontWeight: 500,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 12,
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        },
+      },
+    },
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontFamily: '"Outfit", sans-serif',
+          fontWeight: 600,
+          color: "#1e293b",
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        head: {
+          fontWeight: 600,
+          color: "#475569", // Slate-600
+          backgroundColor: "#f8fafc",
+          borderBottom: "1px solid #e2e8f0",
+        },
+        body: {
+          color: "#334155",
+          borderBottom: "1px solid #f1f5f9",
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          border: "1px solid #efeafb",
-          boxShadow: "0 4px 18px rgba(30, 41, 59, 0.06)",
+          borderRadius: 12,
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
         },
       },
     },
@@ -88,65 +144,6 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: "none",
-        },
-      },
-    },
-    MuiOutlinedInput: {
-      styleOverrides: {
-        root: {
-          borderRadius: 10,
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 10,
-          },
-        },
-      },
-    },
-    MuiSelect: {
-      styleOverrides: {
-        root: {
-          borderRadius: 10,
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiMenu: {
-      styleOverrides: {
-        paper: {
-          borderRadius: 12,
-          boxShadow: "0 18px 44px rgba(30, 41, 59, 0.16)",
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiTooltip: {
-      styleOverrides: {
-        tooltip: {
-          borderRadius: 8,
-        },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        head: {
-          fontWeight: 700,
         },
       },
     },

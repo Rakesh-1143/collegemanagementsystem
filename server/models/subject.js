@@ -40,4 +40,8 @@ const subjectSchema = new Schema({
   },
 });
 
+subjectSchema.index({ department: 1, year: 1 });
+subjectSchema.index({ branch: 1, course: 1 });
+subjectSchema.index({ subjectCode: 1 });
+
 export default mongoose.model("subject", subjectSchema);

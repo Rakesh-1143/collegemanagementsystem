@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import SearchIcon from "@mui/icons-material/Search";
-import { InputAdornment, MenuItem, Select, TextField } from "@mui/material";
+import InputAdornment from "@mui/material/InputAdornment";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
 import { useDispatch, useSelector } from "react-redux";
 import { getFaculty } from "../../../redux/actions/adminActions";
 import { SET_ERRORS } from "../../../redux/actionTypes";
@@ -13,11 +16,29 @@ const Body = () => {
   const dispatch = useDispatch();
   const departments = useSelector((state) => state.admin.allDepartment);
   const errors = useSelector((state) => state.errors);
-  const faculties = useSelector((state) => state.admin.faculties.result);
+  const faculties = useSelector((state) => state.admin.faculties?.result || []);
+  const totalRecords = useSelector((state) => state.admin.faculties?.totalRecords || 0);
   const [department, setDepartment] = useState("");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(8);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  useEffect(() => {
+    if (hasSearched) {
+      setLoading(true);
+      dispatch(getFaculty({ department, search: debouncedQuery, page: page + 1, limit: rowsPerPage }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, page, rowsPerPage]);
 
   useEffect(() => {
     if (Object.keys(errors).length !== 0) {
@@ -38,19 +59,12 @@ const Body = () => {
     e.preventDefault();
     setLoading(true);
     setError({});
-    dispatch(getFaculty({ department }));
+    setPage(0);
+    setHasSearched(true);
+    dispatch(getFaculty({ department, search: debouncedQuery, page: 1, limit: rowsPerPage }));
   };
 
-  const filtered = useMemo(() => {
-    if (!faculties) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return faculties;
-    return faculties.filter((f) =>
-      [f.name, f.username, f.email, f.designation].some((v) =>
-        String(v || "").toLowerCase().includes(q)
-      )
-    );
-  }, [faculties, query]);
+  const filtered = faculties || [];
 
   const columns = [
     { key: "_index", label: "Sr", numeric: true, sortable: false },
@@ -123,8 +137,14 @@ const Body = () => {
                 : "Select a department, then press Search."
             }
             renderCell={(row, col, index) =>
-              col.key === "_index" ? index + 1 : null
+              col.key === "_index" ? (page * rowsPerPage) + index + 1 : null
             }
+            serverSide={true}
+            totalRows={totalRecords}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage)}
+            onRowsPerPageChange={(newRows) => setRowsPerPage(newRows)}
           />
         </div>
       )}

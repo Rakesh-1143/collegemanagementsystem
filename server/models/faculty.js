@@ -59,4 +59,8 @@ const facultySchema = mongoose.Schema({
   },
 });
 
+facultySchema.index({ department: 1 });
+facultySchema.index({ username: 1 });
+facultySchema.index({ branch: 1, course: 1 });
+
 export default mongoose.model("faculty", facultySchema);

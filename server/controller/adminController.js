@@ -271,15 +271,30 @@ export const addFaculty = async (req, res) => {
 
 export const getFaculty = async (req, res) => {
   try {
-    const { department } = req.body;
+    const { department, search, page = 1, limit = 1000 } = req.body;
     const query = department ? { department } : {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await Faculty.countDocuments(query);
     const faculties = await Faculty.find(query)
       .populate("branch course subject")
-      .select("-password");
-    if (faculties.length === 0) {
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    if (faculties.length === 0 && page === 1) {
       return res.status(404).json({ noFacultyError: "No Faculty Found" });
     }
-    res.status(200).json({ result: faculties });
+    res.status(200).json({ result: faculties, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });
@@ -340,13 +355,10 @@ export const addSubject = async (req, res) => {
     });
 
     await newSubject.save();
-    const students = await Student.find({ department, year });
-    if (students.length !== 0) {
-      for (let i = 0; i < students.length; i++) {
-        students[i].subjects.push(newSubject._id);
-        await students[i].save();
-      }
-    }
+    await Student.updateMany(
+      { department, year },
+      { $push: { subjects: newSubject._id } }
+    );
     return res.status(200).json({
       success: true,
       message: "Subject added successfully",
@@ -360,9 +372,8 @@ export const addSubject = async (req, res) => {
 
 export const getSubject = async (req, res) => {
   try {
-    const { department, year, branch, course } = req.body;
+    const { department, year, branch, course, search, page = 1, limit = 1000 } = req.body;
     
-    // Optionally check if the requested department matches the admin's department
     const adminDepartmentId = await getAdminDepartmentId(req);
     if (adminDepartmentId) {
       const requestedDept = await Department.findOne({ department });
@@ -375,11 +386,25 @@ export const getSubject = async (req, res) => {
     if (branch) query.branch = branch;
     if (course) query.course = course;
 
-    const subjects = await Subject.find(query).populate("branch course");
-    if (subjects.length === 0) {
+    if (search) {
+      query.$or = [
+        { subjectName: { $regex: search, $options: "i" } },
+        { subjectCode: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await Subject.countDocuments(query);
+    const subjects = await Subject.find(query)
+      .populate("branch course")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    if (subjects.length === 0 && page === 1) {
       return res.status(404).json({ noSubjectError: "No Subject Found" });
     }
-    res.status(200).json({ result: subjects });
+    res.status(200).json({ result: subjects, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });
@@ -550,6 +575,9 @@ export const addStudent = async (req, res) => {
     );
     const hashedPassword = await bcrypt.hash(initialPasswordFromDob(dob), 10);
 
+    const subjects = await Subject.find({ department, year }, '_id');
+    const subjectIds = subjects.map(s => s._id);
+
     const newStudent = await new Student({
       name,
       dob,
@@ -569,16 +597,11 @@ export const addStudent = async (req, res) => {
       year,
       branch,
       course,
+      subjects: subjectIds,
       passwordUpdated: false,
     });
     await newStudent.save();
-    const subjects = await Subject.find({ department, year });
-    if (subjects.length !== 0) {
-      for (let i = 0; i < subjects.length; i++) {
-        newStudent.subjects.push(subjects[i]._id);
-      }
-      await newStudent.save();
-    }
+
     return res.status(200).json({
       success: true,
       message: "Student registered successfully",
@@ -592,14 +615,30 @@ export const addStudent = async (req, res) => {
 
 export const getStudent = async (req, res) => {
   try {
-    const { department, year } = req.body;
-    const students = await Student.find({ department, year }).select("-password");
+    const { department, year, search, page = 1, limit = 1000 } = req.body;
+    const query = { department, year };
 
-    if (students.length === 0) {
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { username: { $regex: search, $options: "i" } }
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const total = await Student.countDocuments(query);
+    const students = await Student.find(query)
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    if (students.length === 0 && page === 1) {
       return res.status(404).json({ noStudentError: "No Student Found" });
     }
 
-    res.status(200).json({ result: students });
+    res.status(200).json({ result: students, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });

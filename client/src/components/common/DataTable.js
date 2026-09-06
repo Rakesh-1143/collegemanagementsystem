@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TableSortLabel,
-} from "@mui/material";
+import Box from "@mui/material/Box";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
 import Spinner from "../../utils/Spinner";
 import EmptyState from "./EmptyState";
 
@@ -27,15 +25,24 @@ const DataTable = ({
   emptyHint = "Try changing your filters or search.",
   pagination = true,
   defaultRowsPerPage = 8,
+  serverSide = false,
+  totalRows = 0,
+  page: serverPage = 0,
+  rowsPerPage: serverRowsPerPage = 8,
+  onPageChange,
+  onRowsPerPageChange,
 }) => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
+  const [localPage, setLocalPage] = useState(0);
+  const [localRowsPerPage, setLocalRowsPerPage] = useState(defaultRowsPerPage);
   const [order, setOrder] = useState("asc");
   const [orderBy, setOrderBy] = useState(columns[0]?.key || "");
 
+  const actualPage = serverSide ? serverPage : localPage;
+  const actualRowsPerPage = serverSide ? serverRowsPerPage : localRowsPerPage;
+
   useEffect(() => {
-    setPage(0);
-  }, [rows]);
+    if (!serverSide) setLocalPage(0);
+  }, [rows, serverSide]);
 
   const handleRequestSort = (key) => {
     const isAsc = orderBy === key && order === "asc";
@@ -61,9 +68,28 @@ const DataTable = ({
     return sorted;
   }, [rows, order, orderBy]);
 
-  const pageRows = pagination
-    ? sortedRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-    : sortedRows;
+  const pageRows = serverSide 
+    ? sortedRows 
+    : pagination
+      ? sortedRows.slice(actualPage * actualRowsPerPage, actualPage * actualRowsPerPage + actualRowsPerPage)
+      : sortedRows;
+
+  const actualTotalCount = serverSide ? totalRows : rows.length;
+
+  const handlePageChange = (_, newPage) => {
+    if (serverSide && onPageChange) onPageChange(newPage);
+    else setLocalPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    const newRows = parseInt(e.target.value, 10);
+    if (serverSide && onRowsPerPageChange) {
+      onRowsPerPageChange(newRows);
+    } else {
+      setLocalRowsPerPage(newRows);
+      setLocalPage(0);
+    }
+  };
 
   const visibleColumns = columns.filter((c) => c.hidden !== true);
 
@@ -74,8 +100,9 @@ const DataTable = ({
         width: "100%",
         overflow: "hidden",
         border: "1px solid",
-        borderColor: "divider",
-        borderRadius: 3,
+        borderColor: "#e2e8f0",
+        borderRadius: "12px",
+        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
       }}>
       <TableContainer sx={{ maxHeight: "70vh" }}>
         <Table stickyHeader size="small">
@@ -110,7 +137,7 @@ const DataTable = ({
               <TableRow>
                 <TableCell colSpan={visibleColumns.length || 1}>
                   <Box sx={{ py: 4 }}>
-                    <Spinner message="Loading…" height={40} width={120} color="#7c3aed" messageColor="#64748b" />
+                    <Spinner message="Loading…" height={40} width={120} color="#4f46e5" messageColor="#64748b" />
                   </Box>
                 </TableCell>
               </TableRow>
@@ -134,7 +161,7 @@ const DataTable = ({
                         whiteSpace: col.nowrap === false ? "normal" : "nowrap",
                         px: 2,
                       }}>
-                      {(renderCell ? renderCell(row, col, page * rowsPerPage + idx) : null) ??
+                      {(renderCell ? renderCell(row, col, (serverSide ? 0 : actualPage * actualRowsPerPage) + idx) : null) ??
                         (row[col.key] ?? "—")}
                     </TableCell>
                   ))}
@@ -144,17 +171,14 @@ const DataTable = ({
           </TableBody>
         </Table>
       </TableContainer>
-      {pagination && rows.length > 0 && (
+      {pagination && actualTotalCount > 0 && (
         <TablePagination
           component="div"
-          count={rows.length}
-          page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
-          }}
+          count={actualTotalCount}
+          page={actualPage}
+          onPageChange={handlePageChange}
+          rowsPerPage={actualRowsPerPage}
+          onRowsPerPageChange={handleRowsPerPageChange}
           rowsPerPageOptions={[8, 15, 25, 50]}
           labelRowsPerPage="Rows"
         />

@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SearchIcon from "@mui/icons-material/Search";
-import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_ERRORS } from "../../../redux/actionTypes";
 import { deleteBranch, getBranches, updateBranch } from "../../../redux/actions/adminActions";
@@ -129,7 +135,7 @@ const Body = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setSelectedBranch(row); setModalType("view"); }}
-                    className="px-2 py-1 text-xs font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                    className="px-2 py-1 text-xs font-semibold text-white bg-indigo-500 rounded hover:bg-indigo-600 transition-colors"
                   >
                     View
                   </button>
@@ -168,26 +174,26 @@ const Body = () => {
         <DialogContent dividers>
           {modalType === "view" && selectedBranch && (
             <div className="space-y-4">
-              <div><strong className="text-gray-700">Name:</strong> {selectedBranch.branchName}</div>
-              <div><strong className="text-gray-700">Code:</strong> {selectedBranch.branchCode}</div>
-              <div><strong className="text-gray-700">Description:</strong> {selectedBranch.description || "N/A"}</div>
-              <div><strong className="text-gray-700">Status:</strong> {selectedBranch.isActive ? "Active" : "Inactive"}</div>
-              <div><strong className="text-gray-700">Department:</strong> {selectedBranch.department?.department}</div>
+              <div><strong className="text-slate-700">Name:</strong> {selectedBranch.branchName}</div>
+              <div><strong className="text-slate-700">Code:</strong> {selectedBranch.branchCode}</div>
+              <div><strong className="text-slate-700">Description:</strong> {selectedBranch.description || "N/A"}</div>
+              <div><strong className="text-slate-700">Status:</strong> {selectedBranch.isActive ? "Active" : "Inactive"}</div>
+              <div><strong className="text-slate-700">Department:</strong> {selectedBranch.department?.department}</div>
             </div>
           )}
           {modalType === "edit" && selectedBranch && (
             <form id="editBranchForm" onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch Name</label>
-                <input required type="text" value={editForm.branchName} onChange={(e) => setEditForm({...editForm, branchName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Branch Name</label>
+                <input required type="text" value={editForm.branchName} onChange={(e) => setEditForm({...editForm, branchName: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Branch Code</label>
-                <input required type="text" value={editForm.branchCode} onChange={(e) => setEditForm({...editForm, branchCode: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Branch Code</label>
+                <input required type="text" value={editForm.branchCode} onChange={(e) => setEditForm({...editForm, branchCode: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Description</label>
+                <textarea rows={3} value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
             </form>
           )}

@@ -41,21 +41,21 @@ const Sidebar = () => {
       </SidebarGroup>
 
       <SidebarGroup title="Curriculum" isOpen={openGroup === "Curriculum"} onToggle={() => handleToggle("Curriculum")}>
-        <SidebarLink to="/admin/allbranch" icon={MenuBookIcon} label="View All Branches" />
+        <SidebarLink to="/admin/allbranch" icon={MenuBookIcon} label="Manage Branches" />
         <SidebarLink to="/admin/addbranch" icon={AddIcon} label="Add Branch" />
-        <SidebarLink to="/admin/allcourse" icon={MenuBookIcon} label="View All Courses" />
+        <SidebarLink to="/admin/allcourse" icon={MenuBookIcon} label="Manage Courses" />
         <SidebarLink to="/admin/addcourse" icon={AddIcon} label="Add Course" />
       </SidebarGroup>
 
       <SidebarGroup title="Academics" isOpen={openGroup === "Academics"} onToggle={() => handleToggle("Academics")}>
         <SidebarSubGroup title="Faculty" defaultOpen={path.includes("faculty")}>
-          <SidebarLink to="/admin/allfaculty" icon={EngineeringIcon} label="Our Faculty" />
+          <SidebarLink to="/admin/allfaculty" icon={EngineeringIcon} label="Faculty Directory" />
           <SidebarLink to="/admin/addfaculty" icon={AddIcon} label="Add Faculty" />
           <SidebarLink to="/admin/deletefaculty" icon={DeleteIcon} label="Remove Faculty" />
         </SidebarSubGroup>
         
         <SidebarSubGroup title="Student" defaultOpen={path.includes("student")}>
-          <SidebarLink to="/admin/allstudent" icon={BoyIcon} label="Our Students" />
+          <SidebarLink to="/admin/allstudent" icon={BoyIcon} label="Student Directory" />
           <SidebarLink to="/admin/addstudent" icon={AddIcon} label="Add Student" />
           <SidebarLink to="/admin/deletestudent" icon={DeleteIcon} label="Remove Student" />
         </SidebarSubGroup>

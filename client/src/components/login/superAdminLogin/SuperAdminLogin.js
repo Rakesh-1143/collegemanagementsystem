@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { superAdminSignIn } from "../../../redux/actions/superAdminActions";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Spinner from "../../../utils/Spinner";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import { Link } from "react-router-dom";
 
 const SuperAdminLogin = () => {
   const [username, setUsername] = useState("");
@@ -36,77 +38,73 @@ const SuperAdminLogin = () => {
   }, [errors]);
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[#f59e0b] p-4">
-      <div className="grid w-full max-w-4xl grid-cols-1 items-center justify-items-center gap-6 md:grid-cols-2 md:gap-0">
-        <div className="hidden h-80 w-80 flex-col items-center justify-center rounded-3xl bg-white shadow-2xl xl:h-96 xl:w-96 md:flex">
-          <h1 className="text-center text-[3rem] font-bold text-[#f59e0b]">
-            Super Admin
-            <br />
-            Login
-          </h1>
-        </div>
-        <form
-          onSubmit={login}
-          className="w-full max-w-sm space-y-6 rounded-3xl bg-[#2c2f35] p-6 shadow-2xl sm:p-8">
-          <h1 className="text-center text-3xl font-semibold text-white">
-            Super Admin
-          </h1>
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-[#515966]">Username</p>
-            <div className="flex w-full items-center rounded-lg bg-[#515966]">
-              <input
-                onChange={(e) => setUsername(e.target.value)}
-                value={username}
-                type="text"
-                required
-                className="w-full rounded-lg bg-[#515966] px-3 py-2 text-white outline-none placeholder:text-sm"
-                placeholder="Username"
-              />
-            </div>
+    <div className="flex min-h-screen w-full items-center justify-center bg-slate-50 p-6">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl sm:p-10">
+        
+        <div className="mb-8 flex flex-col items-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm">
+            <AdminPanelSettingsIcon sx={{ fontSize: 32 }} />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-[#515966]">Password</p>
-            <div className="flex w-full items-center rounded-lg bg-[#515966] px-3">
+          <h1 className="text-2xl font-display font-bold tracking-tight text-slate-900">
+            Super Admin Login
+          </h1>
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Sign in to manage global system settings
+          </p>
+        </div>
+
+        <form onSubmit={login} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">Username</label>
+            <input
+              onChange={(e) => setUsername(e.target.value)}
+              value={username}
+              type="text"
+              required
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              placeholder="Enter your username"
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <label className="text-sm font-semibold text-slate-700">Password</label>
+            <div className="relative flex w-full items-center">
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 required
                 type={showPassword ? "text" : "password"}
-                className="w-full rounded-lg bg-[#515966] py-2 text-white outline-none placeholder:text-sm"
-                placeholder="Password"
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                placeholder="Enter your password"
               />
-              {showPassword ? (
-                <VisibilityIcon
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="cursor-pointer text-white"
-                />
-              ) : (
-                <VisibilityOffIcon
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="cursor-pointer text-white"
-                />
-              )}
+              <div 
+                className="absolute right-3 cursor-pointer text-slate-400 hover:text-slate-600"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+              </div>
             </div>
           </div>
+
+          {(error.usernameError || error.passwordError) && (
+            <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-600">
+              {error.usernameError || error.passwordError}
+            </div>
+          )}
+
           <button
             type="submit"
-            className="flex h-9 w-32 items-center justify-center rounded-lg bg-[#f59e0b] text-base text-white transition-all duration-150 hover:scale-105">
-            Login
+            disabled={loading}
+            className="mt-2 flex w-full items-center justify-center rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-700 disabled:opacity-70 shadow-sm"
+          >
+            {loading ? <Spinner height={20} width={20} color="#ffffff" /> : "Sign In"}
           </button>
-          {loading && (
-            <Spinner
-              message="Logging In"
-              height={30}
-              width={150}
-              color="#ffffff"
-              messageColor="#fff"
-            />
-          )}
-          {(error.usernameError || error.passwordError) && (
-            <p className="text-red-500">
-              {error.usernameError || error.passwordError}
-            </p>
-          )}
+          
+          <div className="mt-6 text-center text-sm font-medium text-slate-500">
+            <Link to="/" className="text-indigo-600 hover:text-indigo-700 hover:underline">
+              ← Back to Portal Selection
+            </Link>
+          </div>
         </form>
       </div>
     </div>

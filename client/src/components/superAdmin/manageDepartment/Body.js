@@ -139,7 +139,7 @@ const Body = () => {
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => handleSave(dept._id)}
-                              className="rounded bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                              className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
                             >
                               Save
                             </button>

@@ -92,33 +92,33 @@ const Body = () => {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
+        <form onSubmit={handleSubmit} className="divide-y divide-slate-100">
           
           <div className="p-6 sm:p-8 space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">Course Details</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Course Details</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Department - Read Only */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Department <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Department <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   disabled
                   value={adminDept}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm outline-none bg-gray-100 text-gray-600 cursor-not-allowed"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm outline-none bg-slate-100 text-gray-600 cursor-not-allowed"
                 />
               </div>
 
               {/* Branch Selection */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Branch <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Branch <span className="text-red-500">*</span></label>
                 <select
                   required
                   value={value.branchId}
                   onChange={(e) => setValue({ ...value, branchId: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all bg-white"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all bg-white"
                 >
                   <option value="" disabled hidden>Select Branch</option>
                   {branches?.map((br, idx) => (
@@ -128,36 +128,36 @@ const Body = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Course Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Course Name <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   value={value.courseName}
                   onChange={(e) => setValue({ ...value, courseName: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all"
                   placeholder="e.g. M.Tech Structural Engineering"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Course Code <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Course Code <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   required
                   value={value.courseCode}
                   onChange={(e) => setValue({ ...value, courseCode: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all"
                   placeholder="e.g. CE-MT-STR"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Course Type <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Course Type <span className="text-red-500">*</span></label>
                 <select
                   required
                   value={value.courseType}
                   onChange={(e) => setValue({ ...value, courseType: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all bg-white"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all bg-white"
                 >
                   <option value="" disabled hidden>Select Course Type</option>
                   <option value="UG">UG</option>
@@ -168,25 +168,25 @@ const Body = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Duration (in years) <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Duration (in years) <span className="text-red-500">*</span></label>
                 <input
                   type="number"
                   step="0.5"
                   required
                   value={value.duration}
                   onChange={(e) => setValue({ ...value, duration: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all"
                   placeholder="e.g. 2 or 4"
                 />
               </div>
               
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Status <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700">Status <span className="text-red-500">*</span></label>
                 <select
                   required
                   value={value.status}
                   onChange={(e) => setValue({ ...value, status: e.target.value === "true" })}
-                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all bg-white"
+                  className="w-full rounded-lg border-slate-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none transition-all bg-white"
                 >
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
@@ -196,19 +196,19 @@ const Body = () => {
             </div>
           </div>
 
-          <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row items-center justify-end gap-3">
+          <div className="p-6 sm:p-8 bg-slate-50 flex flex-col sm:flex-row items-center justify-end gap-3">
              <button
                type="button"
                onClick={handleClear}
                disabled={loading}
-               className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none transition-all disabled:opacity-50"
+               className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:ring-2 focus:ring-indigo-600 outline-none transition-all disabled:opacity-50"
              >
                Clear
              </button>
              <button
                type="submit"
                disabled={loading}
-               className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-transparent text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 outline-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
+               className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-transparent text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 outline-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
              >
                {loading ? <Spinner height={20} width={20} color="#fff" /> : "Create Course"}
              </button>

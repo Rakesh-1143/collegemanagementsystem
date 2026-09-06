@@ -3,7 +3,17 @@ import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { InputAdornment, MenuItem, Select, TextField, Switch, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import InputAdornment from "@mui/material/InputAdornment";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import TextField from "@mui/material/TextField";
+import Switch from "@mui/material/Switch";
+import IconButton from "@mui/material/IconButton";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { getSubject, getBranches, getCourses, updateSubject, deleteSubject } from "../../../redux/actions/adminActions";
 import { SET_ERRORS, UPDATE_SUBJECT, DELETE_SUBJECT } from "../../../redux/actionTypes";
@@ -17,16 +27,34 @@ const Body = () => {
   const branches = useSelector((state) => state.admin.branches);
   const courses = useSelector((state) => state.admin.courses);
   const errors = useSelector((state) => state.errors);
-  const subjects = useSelector((state) => state.admin.subjects.result);
+  const subjects = useSelector((state) => state.admin.subjects?.result || []);
+  const totalRecords = useSelector((state) => state.admin.subjects?.totalRecords || 0);
   const subjectUpdated = useSelector((state) => state.admin.subjectUpdated);
   const subjectDeleted = useSelector((state) => state.admin.subjectDeleted);
 
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
   
   // Filter state
   const [value, setValue] = useState({ department: "", year: "", branch: "", course: "" });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(8);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(handler);
+  }, [query]);
+
+  useEffect(() => {
+    if (hasSearched) {
+      setLoading(true);
+      dispatch(getSubject({ ...value, search: debouncedQuery, page: page + 1, limit: rowsPerPage }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQuery, page, rowsPerPage]);
 
   // Edit Dialog State
   const [editOpen, setEditOpen] = useState(false);
@@ -53,8 +81,8 @@ const Body = () => {
   useEffect(() => {
     if (subjectUpdated || subjectDeleted) {
       setEditOpen(false);
-      if (value.department && value.year) {
-        dispatch(getSubject(value));
+      if (value.department && value.year && hasSearched) {
+        dispatch(getSubject({ ...value, search: debouncedQuery, page: page + 1, limit: rowsPerPage }));
       }
       dispatch({ type: UPDATE_SUBJECT, payload: false });
       dispatch({ type: DELETE_SUBJECT, payload: false });
@@ -65,7 +93,9 @@ const Body = () => {
     e.preventDefault();
     setLoading(true);
     setError({});
-    dispatch(getSubject(value));
+    setPage(0);
+    setHasSearched(true);
+    dispatch(getSubject({ ...value, search: debouncedQuery, page: 1, limit: rowsPerPage }));
   };
 
   const handleEditOpen = (subject) => {
@@ -95,16 +125,7 @@ const Body = () => {
     dispatch(updateSubject({ _id: subject._id, isActive: subject.isActive === false ? true : false }));
   };
 
-  const filtered = useMemo(() => {
-    if (!subjects) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return subjects;
-    return subjects.filter((s) =>
-      [s.subjectCode, s.subjectName, s.department].some((v) =>
-        String(v || "").toLowerCase().includes(q)
-      )
-    );
-  }, [subjects, query]);
+  const filtered = subjects || [];
 
   const columns = [
     { key: "_index", label: "Sr", numeric: true, sortable: false },
@@ -229,7 +250,7 @@ const Body = () => {
                 : "Select filters and press Search."
             }
             renderCell={(row, col, index) => {
-              if (col.key === "_index") return index + 1;
+              if (col.key === "_index") return (page * rowsPerPage) + index + 1;
               if (col.key === "branch") return row.branch?.branchName || "-";
               if (col.key === "course") return row.course?.courseName || "-";
               if (col.key === "status") {
@@ -256,6 +277,12 @@ const Body = () => {
               }
               return null;
             }}
+            serverSide={true}
+            totalRows={totalRecords}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage)}
+            onRowsPerPageChange={(newRows) => setRowsPerPage(newRows)}
           />
         </div>
       )}
@@ -287,7 +314,7 @@ const Body = () => {
             onChange={(e) => setEditData({ ...editData, totalLectures: e.target.value })}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Branch</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Branch</label>
             <Select
               fullWidth
               size="small"
@@ -300,7 +327,7 @@ const Body = () => {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Course</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Course</label>
             <Select
               fullWidth
               size="small"

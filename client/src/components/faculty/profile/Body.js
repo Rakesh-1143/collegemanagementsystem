@@ -1,7 +1,7 @@
 import React from "react";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import SecurityUpdateIcon from "@mui/icons-material/SecurityUpdate";
-import { Avatar } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
 import Data from "./Data";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ const Body = () => {
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
         <div className="flex  items-center justify-between mr-8">
-          <div className="flex space-x-2 text-gray-400">
+          <div className="flex space-x-2 text-slate-400">
             <AssignmentIndIcon />
             <h1>Profile</h1>
           </div>

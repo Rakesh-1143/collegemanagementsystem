@@ -1,23 +1,23 @@
 import React from "react";
 
 const colorClasses = {
-  violet: "bg-violet-100 text-violet-700",
-  blue: "bg-blue-100 text-blue-700",
-  green: "bg-emerald-100 text-emerald-700",
-  orange: "bg-orange-100 text-orange-700",
-  pink: "bg-pink-100 text-pink-700",
-  slate: "bg-slate-100 text-slate-600",
+  indigo: "bg-indigo-50 text-indigo-600",
+  blue: "bg-blue-50 text-indigo-600",
+  green: "bg-emerald-50 text-emerald-600",
+  orange: "bg-amber-50 text-amber-600",
+  pink: "bg-pink-50 text-pink-600",
+  slate: "bg-slate-50 text-slate-600",
 };
 
-const StatCard = ({ icon: Icon, label, value, color = "violet" }) => {
+const StatCard = ({ icon: Icon, label, value, color = "indigo" }) => {
   return (
-    <div className="flex min-w-0 items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+    <div className="flex min-w-0 items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md hover:border-slate-300">
       {Icon && (
         <div
-          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-            colorClasses[color] || colorClasses.violet
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
+            colorClasses[color] || colorClasses.indigo
           }`}>
-          <Icon sx={{ fontSize: 26 }} />
+          <Icon sx={{ fontSize: 24 }} />
         </div>
       )}
       <div className="min-w-0">

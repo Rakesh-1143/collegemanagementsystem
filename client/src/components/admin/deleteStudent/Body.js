@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import BoyIcon from "@mui/icons-material/Boy";
-import { Checkbox, MenuItem, Select } from "@mui/material";
+import Checkbox from "@mui/material/Checkbox";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { useDispatch, useSelector } from "react-redux";
 import { deleteStudent, getStudent } from "../../../redux/actions/adminActions";
 import { DELETE_STUDENT, SET_ERRORS } from "../../../redux/actionTypes";

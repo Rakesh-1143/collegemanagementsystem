@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import SearchIcon from "@mui/icons-material/Search";
-import { InputAdornment, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import InputAdornment from "@mui/material/InputAdornment";
+import TextField from "@mui/material/TextField";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { SET_ERRORS } from "../../../redux/actionTypes";
 import { deleteCourse, getCourses, updateCourse, getBranches } from "../../../redux/actions/adminActions";
-import { Select, MenuItem } from "@mui/material";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import PageHeader from "../../common/PageHeader";
 import DataTable from "../../common/DataTable";
 
@@ -157,7 +164,7 @@ const Body = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => { setSelectedCourse(row); setModalType("view"); }}
-                    className="px-2 py-1 text-xs font-semibold text-white bg-blue-500 rounded hover:bg-blue-600 transition-colors"
+                    className="px-2 py-1 text-xs font-semibold text-white bg-indigo-500 rounded hover:bg-indigo-600 transition-colors"
                   >
                     View
                   </button>
@@ -196,28 +203,28 @@ const Body = () => {
         <DialogContent dividers>
           {modalType === "view" && selectedCourse && (
             <div className="space-y-4">
-              <div><strong className="text-gray-700">Name:</strong> {selectedCourse.courseName}</div>
-              <div><strong className="text-gray-700">Code:</strong> {selectedCourse.courseCode}</div>
-              <div><strong className="text-gray-700">Type:</strong> {selectedCourse.courseType}</div>
-              <div><strong className="text-gray-700">Duration:</strong> {selectedCourse.duration}</div>
-              <div><strong className="text-gray-700">Status:</strong> {selectedCourse.isActive ? "Active" : "Inactive"}</div>
-              <div><strong className="text-gray-700">Branch:</strong> {selectedCourse.branch?.branchName}</div>
-              <div><strong className="text-gray-700">Department:</strong> {selectedCourse.department?.department}</div>
+              <div><strong className="text-slate-700">Name:</strong> {selectedCourse.courseName}</div>
+              <div><strong className="text-slate-700">Code:</strong> {selectedCourse.courseCode}</div>
+              <div><strong className="text-slate-700">Type:</strong> {selectedCourse.courseType}</div>
+              <div><strong className="text-slate-700">Duration:</strong> {selectedCourse.duration}</div>
+              <div><strong className="text-slate-700">Status:</strong> {selectedCourse.isActive ? "Active" : "Inactive"}</div>
+              <div><strong className="text-slate-700">Branch:</strong> {selectedCourse.branch?.branchName}</div>
+              <div><strong className="text-slate-700">Department:</strong> {selectedCourse.department?.department}</div>
             </div>
           )}
           {modalType === "edit" && selectedCourse && (
             <form id="editCourseForm" onSubmit={handleEditSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Course Name</label>
-                <input required type="text" value={editForm.courseName} onChange={(e) => setEditForm({...editForm, courseName: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Course Name</label>
+                <input required type="text" value={editForm.courseName} onChange={(e) => setEditForm({...editForm, courseName: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Course Code</label>
-                <input required type="text" value={editForm.courseCode} onChange={(e) => setEditForm({...editForm, courseCode: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Course Code</label>
+                <input required type="text" value={editForm.courseCode} onChange={(e) => setEditForm({...editForm, courseCode: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Course Type</label>
-                <select value={editForm.courseType} onChange={(e) => setEditForm({...editForm, courseType: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2 bg-white">
+                <label className="block text-sm font-medium text-slate-700">Course Type</label>
+                <select value={editForm.courseType} onChange={(e) => setEditForm({...editForm, courseType: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2 bg-white">
                   <option value="UG">UG</option>
                   <option value="PG">PG</option>
                   <option value="Diploma">Diploma</option>
@@ -225,8 +232,8 @@ const Body = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Duration (in years)</label>
-                <input required type="number" step="0.5" value={editForm.duration} onChange={(e) => setEditForm({...editForm, duration: e.target.value})} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
+                <label className="block text-sm font-medium text-slate-700">Duration (in years)</label>
+                <input required type="number" step="0.5" value={editForm.duration} onChange={(e) => setEditForm({...editForm, duration: e.target.value})} className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm border p-2" />
               </div>
             </form>
           )}

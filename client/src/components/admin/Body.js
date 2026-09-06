@@ -34,14 +34,14 @@ const Body = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <Calendar className="!w-full !border-0" />
         </div>
 
-        <div className="xl:col-span-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+        <div className="xl:col-span-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="mb-4 flex items-center gap-2">
-            <CampaignIcon className="text-violet-600" />
-            <h2 className="text-lg font-bold text-slate-800">Notices</h2>
+            <CampaignIcon className="text-indigo-600" />
+            <h2 className="text-lg font-display font-semibold text-slate-800">Notices</h2>
           </div>
           {!openNotice ? (
             <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-1">
@@ -63,7 +63,7 @@ const Body = () => {
               <button
                 type="button"
                 onClick={() => setOpenNotice(null)}
-                className="mb-3 text-sm font-semibold text-violet-600 hover:text-violet-800">
+                className="mb-3 text-sm font-semibold text-indigo-600 hover:text-indigo-800">
                 ← Back to all notices
               </button>
               <ShowNotice notice={openNotice} />

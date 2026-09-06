@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import { useSelector } from "react-redux";
-import { TextField, InputAdornment } from "@mui/material";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
 import SearchIcon from "@mui/icons-material/Search";
 import PageHeader from "../../common/PageHeader";
 import EmptyState from "../../common/EmptyState";

@@ -64,8 +64,10 @@ export const getAllStudent = () => async (dispatch) => {
   }
 };
 
-export const getAllDepartment = () => async (dispatch) => {
+export const getAllDepartment = () => async (dispatch, getState) => {
   try {
+    const state = getState();
+    if (state.admin.allDepartment && state.admin.allDepartment.length > 0) return;
     const { data } = await api.getAllDepartment();
     dispatch({ type: GET_ALL_DEPARTMENT, payload: data });
   } catch (error) {
@@ -127,8 +129,10 @@ export const addBranch = (formData) => async (dispatch) => {
   }
 };
 
-export const getBranches = () => async (dispatch) => {
+export const getBranches = () => async (dispatch, getState) => {
   try {
+    const state = getState();
+    if (state.admin.branches && state.admin.branches.length > 0) return;
     const { data } = await api.getBranches();
     dispatch({ type: GET_BRANCHES, payload: data.result });
   } catch (error) {
@@ -166,8 +170,10 @@ export const addCourse = (formData) => async (dispatch) => {
   }
 };
 
-export const getCourses = () => async (dispatch) => {
+export const getCourses = () => async (dispatch, getState) => {
   try {
+    const state = getState();
+    if (state.admin.courses && state.admin.courses.length > 0) return;
     const { data } = await api.getCourses();
     dispatch({ type: GET_COURSES, payload: data.result });
   } catch (error) {

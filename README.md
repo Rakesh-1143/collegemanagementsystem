@@ -17,7 +17,11 @@ College ERP using MERN Stack
 - In production (`NODE_ENV=production`) the dummy admin is **not** created — insert the first admin manually in MongoDB.
 
 # TechStack
+ADM2026UN002
 
+FAC202603003
+
+STU202603002
 1. Reactjs
 2. Tailwind CSS
 3. MongoDB

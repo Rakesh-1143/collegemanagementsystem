@@ -1,5 +1,7 @@
 import React from "react";
-import { Alert, Slide, Snackbar } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Slide from "@mui/material/Slide";
+import Snackbar from "@mui/material/Snackbar";
 import { useDispatch, useSelector } from "react-redux";
 import { HIDE_NOTIFICATION } from "../../redux/actionTypes";
 

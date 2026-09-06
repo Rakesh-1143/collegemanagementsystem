@@ -22,4 +22,7 @@ const branchSchema = mongoose.Schema({
   },
 });
 
+branchSchema.index({ department: 1 });
+branchSchema.index({ branchName: 1 });
+
 export default mongoose.model("branch", branchSchema);

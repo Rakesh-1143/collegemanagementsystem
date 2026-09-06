@@ -30,4 +30,7 @@ const courseSchema = mongoose.Schema({
   },
 });
 
+courseSchema.index({ department: 1, branch: 1 });
+courseSchema.index({ courseName: 1 });
+
 export default mongoose.model("course", courseSchema);

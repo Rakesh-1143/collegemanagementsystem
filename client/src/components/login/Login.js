@@ -1,58 +1,72 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import EngineeringIcon from '@mui/icons-material/Engineering';
+import SchoolIcon from '@mui/icons-material/School';
 
-const cardBase =
-  "w-full h-64 sm:h-72 lg:h-80 shadow-2xl flex flex-col justify-center items-center bg-transparent backdrop-blur-md bg-opacity-60 rounded-xl";
+const PortalCard = ({ title, to, icon: Icon, description }) => (
+  <Link
+    to={to}
+    className="group relative flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm transition-all hover:border-indigo-500 hover:shadow-md"
+  >
+    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+      <Icon sx={{ fontSize: 32 }} />
+    </div>
+    <h3 className="mb-2 text-xl font-display font-semibold text-slate-800">{title}</h3>
+    <p className="text-sm text-slate-500 font-medium">{description}</p>
+    <div className="mt-6 flex h-10 w-full items-center justify-center rounded-lg bg-slate-50 text-sm font-medium text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
+      Access Portal
+    </div>
+  </Link>
+);
 
 const Login = () => {
   return (
-    <div
-      className="flex min-h-screen w-full items-center justify-center bg-cover bg-center"
-      style={{
-        backgroundImage: `url("https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80")`,
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-        backgroundSize: "cover",
-      }}>
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="relative flex w-full max-w-4xl flex-col items-center space-y-10 px-4 py-12 sm:space-y-16">
-        <h1 className="w-full rounded-2xl bg-black py-4 text-center text-2xl font-semibold text-white sm:text-3xl bg-opacity-75">
-          Jawaharlal Nehru Technological University Anantapuramu
-        </h1>
-        <div className="grid w-full max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
-          <div className={`${cardBase} bg-[#f59e0b]`}>
-            <h1 className="text-4xl font-extrabold text-white text-center">Super<br />Admin</h1>
-            <Link
-              to="/login/superadminlogin"
-              className="mt-8 flex h-10 w-32 items-center justify-center rounded-lg bg-blue-500 text-lg text-white transition-all duration-200 hover:scale-110">
-              Login
-            </Link>
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50 p-6 sm:p-12">
+      <div className="w-full max-w-5xl space-y-12">
+        
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-sm">
+            <SchoolIcon sx={{ fontSize: 36 }} />
           </div>
-          <div className={`${cardBase} bg-[#04bd7d]`}>
-            <h1 className="text-4xl font-extrabold text-white">Admin</h1>
-            <Link
-              to="/login/adminlogin"
-              className="mt-8 flex h-10 w-32 items-center justify-center rounded-lg bg-blue-500 text-lg text-white transition-all duration-200 hover:scale-110">
-              Login
-            </Link>
-          </div>
-          <div className={`${cardBase} bg-[#5a51d6]`}>
-            <h1 className="text-4xl font-extrabold text-white">Faculty</h1>
-            <Link
-              to="/login/facultylogin"
-              className="mt-8 flex h-10 w-32 items-center justify-center rounded-lg bg-blue-500 text-lg text-white transition-all duration-200 hover:scale-110">
-              Login
-            </Link>
-          </div>
-          <div className={`${cardBase} bg-[#d65158]`}>
-            <h1 className="text-4xl font-extrabold text-white">Student</h1>
-            <Link
-              to="/login/studentlogin"
-              className="mt-8 flex h-10 w-32 items-center justify-center rounded-lg bg-blue-500 text-lg text-white transition-all duration-200 hover:scale-110">
-              Login
-            </Link>
-          </div>
+          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight sm:text-4xl">
+            College ERP
+          </h1>
+          <p className="text-lg text-slate-500 font-medium max-w-xl mx-auto">
+            Select your portal to access the centralized management system.
+          </p>
         </div>
+
+        {/* Portal Grid */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          <PortalCard 
+            title="Super Admin" 
+            to="/login/superadminlogin" 
+            icon={AdminPanelSettingsIcon}
+            description="System configuration and global management"
+          />
+          <PortalCard 
+            title="Administrator" 
+            to="/login/adminlogin" 
+            icon={SupervisorAccountIcon}
+            description="Manage departments, courses, and users"
+          />
+          <PortalCard 
+            title="Faculty" 
+            to="/login/facultylogin" 
+            icon={EngineeringIcon}
+            description="Manage attendance, marks, and classes"
+          />
+          <PortalCard 
+            title="Student" 
+            to="/login/studentlogin" 
+            icon={SchoolIcon}
+            description="View grades, attendance, and notices"
+          />
+        </div>
+        
       </div>
     </div>
   );

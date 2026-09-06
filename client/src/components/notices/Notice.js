@@ -8,7 +8,7 @@ const Notice = ({ idx, notice, notFor }) => {
         <h1 className="font-bold ml-3 truncate min-w-0 flex-[2]">
           {notice.topic}
         </h1>
-        <p className="truncate min-w-0 flex-[3] text-gray-500">
+        <p className="truncate min-w-0 flex-[3] text-slate-500">
           {notice.content}
         </p>
       </div>

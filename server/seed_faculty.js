@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import Faculty from "./models/faculty.js";
 import Student from "./models/student.js";
 import Subject from "./models/subject.js";
+import Branch from "./models/branch.js";
+import Course from "./models/course.js";
+import Department from "./models/department.js";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 
@@ -15,6 +18,41 @@ const run = async () => {
     });
     console.log("Connected to MongoDB");
 
+    // Create a Department
+    let dept = await Department.findOne({ departmentCode: "CSE" });
+    if (!dept) {
+      dept = new Department({
+        department: "Computer Science",
+        departmentCode: "CSE",
+      });
+      await dept.save();
+    }
+
+    // Create a Branch
+    let branch = await Branch.findOne({ branchCode: "CS" });
+    if (!branch) {
+      branch = new Branch({
+        branchName: "Computer Science and Engineering",
+        branchCode: "CS",
+        department: dept._id,
+      });
+      await branch.save();
+    }
+
+    // Create a Course
+    let course = await Course.findOne({ courseCode: "BTECH" });
+    if (!course) {
+      course = new Course({
+        courseName: "Bachelor of Technology",
+        courseCode: "BTECH",
+        courseType: "UG",
+        duration: 4,
+        branch: branch._id,
+        department: dept._id,
+      });
+      await course.save();
+    }
+
     // Create a subject
     let subject = await Subject.findOne({ subjectCode: "TEST101" });
     if (!subject) {
@@ -23,9 +61,16 @@ const run = async () => {
         subjectCode: "TEST101",
         department: "Computer Science",
         year: "1",
+        branch: branch._id,
+        course: course._id,
       });
       await subject.save();
       console.log("Created subject:", subject.subjectName);
+    } else {
+      subject.branch = branch._id;
+      subject.course = course._id;
+      await subject.save();
+      console.log("Updated subject with branch and course");
     }
 
     // Create a faculty

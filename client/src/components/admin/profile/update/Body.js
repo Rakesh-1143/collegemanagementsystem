@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateAdmin } from "../../../../redux/actions/adminActions";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useNavigate } from "react-router-dom";
-import { MenuItem, Select } from "@mui/material";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import Spinner from "../../../../utils/Spinner";
 import { SET_ERRORS } from "../../../../redux/actionTypes";
 import { notify } from "../../../../redux/actions/notificationActions";
@@ -71,7 +72,7 @@ const Body = () => {
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
         <div className="flex  items-center justify-between mr-8">
-          <div className="flex space-x-2 text-gray-400">
+          <div className="flex space-x-2 text-slate-400">
             <SecurityUpdateIcon />
             <h1>Update</h1>
           </div>
