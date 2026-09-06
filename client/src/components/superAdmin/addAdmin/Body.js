@@ -3,8 +3,6 @@ import EngineeringIcon from "@mui/icons-material/Engineering";
 import { useDispatch, useSelector } from "react-redux";
 import FileBase from "../../../utils/FileBase";
 import { addAdmin } from "../../../redux/actions/superAdminActions";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import Spinner from "../../../utils/Spinner";
 import * as classes from "../../../utils/styles";
 import { ADD_ADMIN, SET_ERRORS } from "../../../redux/actionTypes";
@@ -14,14 +12,12 @@ const Body = () => {
   const dispatch = useDispatch();
   const errors = useSelector((state) => state.errors);
   const adminAdded = useSelector((state) => state.superAdmin.adminAdded);
-  const departments = useSelector((state) => state.superAdmin.departments);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const [value, setValue] = useState({
     name: "",
     dob: "",
     email: "",
-    department: "",
     contactNumber: "",
     avatar: "",
     joiningYear: Date().split(" ")[3],
@@ -48,7 +44,6 @@ const Body = () => {
           name: "",
           dob: "",
           email: "",
-          department: "",
           contactNumber: "",
           avatar: "",
           joiningYear: Date().split(" ")[3],
@@ -119,25 +114,6 @@ const Body = () => {
                   />
                 </div>
               </div>
-              <div className={classes.adminForm2r}>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Department :</h1>
-                  <Select
-                    displayEmpty
-                    sx={{ height: 36 }}
-                    inputProps={{ "aria-label": "Without label" }}
-                    value={value.department}
-                    onChange={(e) =>
-                      setValue({ ...value, department: e.target.value })
-                    }>
-                    <MenuItem value="">None (Unassigned)</MenuItem>
-                    {departments?.map((dp, idx) => (
-                      <MenuItem key={idx} value={dp.department}>
-                        {dp.department}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </div>
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Contact Number :</h1>
 
@@ -175,7 +151,6 @@ const Body = () => {
                     name: "",
                     dob: "",
                     email: "",
-                    department: "",
                     contactNumber: "",
                     avatar: "",
                     joiningYear: Date().split(" ")[3],

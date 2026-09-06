@@ -174,9 +174,8 @@ export const getAdmin = async (req, res) => {
     const { department } = req.body;
     const query = department ? { department } : {};
     const admins = await Admin.find(query).select("-password");
-    if (admins.length === 0) {
-      return res.status(404).json({ noAdminError: "No Admin Found" });
-    }
+    // Return empty array (not 404) so the frontend can render the empty state
+    // without the Redux action treating it as a network error.
     res.status(200).json({ result: admins });
   } catch (error) {
     console.error(error);
