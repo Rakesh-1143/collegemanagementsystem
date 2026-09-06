@@ -1,5 +1,6 @@
 import * as api from "../api";
 import { GET_ME, LOGOUT } from "../actionTypes";
+import store from "../store";
 
 // Called once on app load. Restores the logged-in user from the httpOnly
 // session cookie (data itself always lives in MongoDB).
@@ -11,9 +12,16 @@ export const restoreSession = () => async (dispatch) => {
       payload: { role: data.role, result: data.result },
     });
   } catch (error) {
-    // No valid session: clear any in-memory auth data from a previous login
-    // (e.g. after the token expired) so protected pages redirect to login.
-    dispatch({ type: LOGOUT });
+    // No valid session at the time this request was sent. Only clear the
+    // in-memory auth data if the user hasn't logged in while /api/me was in
+    // flight — a slow restore racing a fast login must not kick the user out.
+    const state = store.getState();
+    const hasLiveSession = ["admin", "superAdmin", "faculty", "student"].some(
+      (role) => !!state[role]?.authData
+    );
+    if (!hasLiveSession) {
+      dispatch({ type: LOGOUT });
+    }
   }
 };
 

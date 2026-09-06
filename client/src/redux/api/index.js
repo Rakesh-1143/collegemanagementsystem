@@ -8,17 +8,39 @@ const API = axios.create({
   withCredentials: true, // send/receive the httpOnly auth cookie
 });
 
-// When any authenticated request comes back 401 the session cookie is
-// missing, expired, or invalid. Clear the client-side session so the route
-// guards redirect to the login page instead of leaving the user on a
-// protected page staring at a cryptic "Unauthenticated" error.
-// Login requests are excluded (wrong credentials are a normal 401/404).
+// Timestamp of the current login. Requests that began BEFORE the login (e.g.
+// the on-load /api/me session restore, which can be slow when the Render
+// backend is cold) may come back 401 after the login already succeeded. Those
+// stale 401s must not wipe the fresh session.
+let sessionStartedAt = 0;
+
+API.interceptors.request.use((config) => {
+  config.startedAt = Date.now();
+  return config;
+});
+
 API.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const { url = "", method = "" } = response.config || {};
+    if (String(method).toLowerCase() === "post" && url.includes("/login")) {
+      sessionStartedAt = response.config?.startedAt || Date.now();
+    }
+    return response;
+  },
   (error) => {
     const status = error.response?.status;
     const url = error.config?.url || "";
-    if (status === 401 && !url.includes("/login")) {
+    // Treat a 401 as session expiry (cookie missing/expired/invalid) ONLY when
+    // the request was issued after the current login. Clear the client-side
+    // session then so the route guards redirect to the login page instead of
+    // leaving the user on a protected page staring at a cryptic
+    // "Unauthenticated" error. Login requests are excluded (wrong credentials
+    // are a normal 401/404). Stale pre-login 401s are ignored.
+    if (
+      status === 401 &&
+      !url.includes("/login") &&
+      (error.config?.startedAt || 0) > sessionStartedAt
+    ) {
       store.dispatch({ type: LOGOUT });
     }
     return Promise.reject(error);
