@@ -25,15 +25,7 @@ const Body = () => {
 
   const columns = [
     { key: "_index", label: "Sr", numeric: true, sortable: false },
-    { key: "avatar", label: "Profile", format: (val, row) => (
-      <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200">
-        <img
-          src={val || "https://ui-avatars.com/api/?name=" + row.name}
-          alt={row.name}
-          className="h-full w-full object-cover"
-        />
-      </div>
-    )},
+    { key: "avatar", label: "Profile" },
     { key: "username", label: "Roll Number" },
     { key: "name", label: "Name" },
     { key: "email", label: "Email" },
@@ -76,6 +68,20 @@ const Body = () => {
           <DataTable
             columns={columns}
             rows={filteredStudents}
+            renderCell={(row, col, index) => {
+              if (col.key === "_index") return index + 1;
+              if (col.key === "avatar") return (
+                <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200">
+                  <img
+                    src={row.avatar || "https://ui-avatars.com/api/?name=" + row.name}
+                    alt={row.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              );
+              if (col.key === "contactNumber") return row.contactNumber || "N/A";
+              return null;
+            }}
           />
         </div>
       )}

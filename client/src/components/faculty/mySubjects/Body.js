@@ -9,11 +9,12 @@ const Body = () => {
   const mySubjects = useSelector((state) => state.faculty.mySubjects) || [];
 
   const columns = [
+    { key: "_index", label: "Sr", numeric: true, sortable: false },
     { key: "subjectCode", label: "Subject Code" },
     { key: "subjectName", label: "Subject Name" },
     { key: "department", label: "Department" },
-    { key: "branch", label: "Branch", format: (val) => val?.branchName || "N/A" },
-    { key: "course", label: "Course", format: (val) => val?.courseName || "N/A" },
+    { key: "branch", label: "Branch" },
+    { key: "course", label: "Course" },
     { key: "year", label: "Year" },
     { key: "totalLectures", label: "Total Lectures" },
   ];
@@ -36,6 +37,12 @@ const Body = () => {
           <DataTable
             columns={columns}
             rows={mySubjects}
+            renderCell={(row, col, index) => {
+              if (col.key === "_index") return index + 1;
+              if (col.key === "branch") return row.branch?.branchName || "N/A";
+              if (col.key === "course") return row.course?.courseName || "N/A";
+              return null;
+            }}
           />
         </div>
       )}
