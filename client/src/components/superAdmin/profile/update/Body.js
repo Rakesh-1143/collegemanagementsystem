@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Spinner from "../../../../utils/Spinner";
-import { SET_ERRORS } from "../../../../redux/actionTypes";
+import { SET_ERRORS, UPDATE_SUPER_ADMIN } from "../../../../redux/actionTypes";
 import { notify } from "../../../../redux/actions/notificationActions";
 import * as classes from "../../../../utils/styles";
 
@@ -18,7 +18,9 @@ const Body = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const errors = useSelector((state) => state.errors);
-  const updatedAdmin = useSelector((state) => state.superAdmin.updatedAdmin);
+  const updatedSuperAdmin = useSelector(
+    (state) => state.superAdmin.updatedSuperAdmin
+  );
   const departments = useSelector((state) => state.superAdmin.allDepartment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
@@ -48,17 +50,23 @@ const Body = () => {
       setLoading(false);
     } else {
       dispatch(updateSuperAdmin(value));
-      dispatch(notify("Profile updated. Log in again to see the changes.", "info"));
     }
   };
 
   useEffect(() => {
-    if (errors || updatedAdmin) {
+    if (errors || updatedSuperAdmin) {
       setLoading(false);
     } else {
       setLoading(true);
     }
-  }, [errors, updatedAdmin]);
+  }, [errors, updatedSuperAdmin]);
+
+  // Reset the success flag so the next submit can trigger the spinner again.
+  useEffect(() => {
+    if (updatedSuperAdmin) {
+      dispatch({ type: UPDATE_SUPER_ADMIN, payload: false });
+    }
+  }, [updatedSuperAdmin, dispatch]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });

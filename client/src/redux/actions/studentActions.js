@@ -6,6 +6,7 @@ import {
   ATTENDANCE,
   UPDATE_STUDENT,
   GET_SUBJECT,
+  GET_ME,
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
@@ -35,8 +36,11 @@ export const studentUpdatePassword =
 
 export const updateStudent = (formData) => async (dispatch) => {
   try {
-    await api.updateStudent(formData);
+    const { data } = await api.updateStudent(formData);
     dispatch({ type: UPDATE_STUDENT, payload: true });
+    // Reflect profile changes immediately in the header/profile UI.
+    dispatch({ type: GET_ME, payload: { role: "student", result: data } });
+    dispatch(notify("Profile updated successfully", "success"));
   } catch (error) {
     dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }

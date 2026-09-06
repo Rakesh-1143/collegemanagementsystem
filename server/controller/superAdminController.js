@@ -1,7 +1,14 @@
 import SuperAdmin from "../models/superAdmin.js";
 import Admin from "../models/admin.js";
 import Department from "../models/department.js";
+import Branch from "../models/branch.js";
+import Course from "../models/course.js";
+import Subject from "../models/subject.js";
+import Faculty from "../models/faculty.js";
+import Student from "../models/student.js";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
+import { IS_PRODUCTION } from "../config.js";
 import {
   createAuthToken,
   sanitizeUser,
@@ -44,6 +51,11 @@ export const superAdminLogin = async (req, res) => {
     );
     if (!isPasswordCorrect) {
       return res.status(404).json({ passwordError: "Invalid Credentials" });
+    }
+    if (existingSuperAdmin.isActive === false) {
+      return res
+        .status(403)
+        .json({ backendError: "Super Admin account is deactivated" });
     }
 
     const token = createAuthToken(existingSuperAdmin._id, existingSuperAdmin.email, "superadmin");
@@ -243,27 +255,92 @@ export const editAdmin = async (req, res) => {
 };
 
 export const addDummySuperAdmin = async () => {
-  const email = process.env.SUPER_ADMIN_EMAIL || "superadmin@demo.com";
-  const password = process.env.SUPER_ADMIN_PASSWORD || "123456";
+  const email = process.env.SUPER_ADMIN_EMAIL;
+  const password = process.env.SUPER_ADMIN_PASSWORD;
   const name = "Super Admin";
-  const username = process.env.SUPER_ADMIN_USERNAME || "SUPERADMIN";
+  const username = process.env.SUPER_ADMIN_USERNAME;
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // Never create a default / guessable Super Admin in production unless the
+  // operator explicitly supplies all three credentials via environment
+  // variables. This prevents a fresh deploy from shipping with
+  // SUPERADMIN/123456 or superadmin@demo.com.
+  let finalEmail = email;
+  let finalPassword = password;
+  let finalUsername = username;
 
-  const dummySuperAdmin = await SuperAdmin.findOne({ email });
+  if (IS_PRODUCTION) {
+    // Defense in depth - runs regardless of whether credentials are supplied:
+    // if a Super Admin created with the old well-known default credentials
+    // still exists AND still validates against the public default password
+    // (123456), disable it and randomize the hash.
+    const defaultAccount = await SuperAdmin.findOne({
+      $or: [
+        { email: "superadmin@demo.com" },
+        { username: "SUPERADMIN" },
+      ],
+    });
+    if (defaultAccount) {
+      const stillDefault = await bcrypt.compare("123456", defaultAccount.password);
+      if (stillDefault) {
+        defaultAccount.isActive = false;
+        defaultAccount.password = await bcrypt.hash(
+          crypto.randomBytes(32).toString("hex"),
+          10
+        );
+        await defaultAccount.save();
+        console.error(
+          "Production: the default Super Admin (SUPERADMIN / superadmin@demo.com) was still using the default password - account disabled and password randomized. Seed a new one via SUPER_ADMIN_EMAIL, SUPER_ADMIN_USERNAME and SUPER_ADMIN_PASSWORD."
+        );
+      }
+    }
 
-  if (!dummySuperAdmin) {
+    if (!email || !password || !username) {
+      console.log(
+        "Production: skipping Super Admin seeding. Set SUPER_ADMIN_EMAIL, SUPER_ADMIN_USERNAME and SUPER_ADMIN_PASSWORD to create the first Super Admin."
+      );
+      return;
+    }
+    if (password.length < 8) {
+      console.error(
+        "FATAL: SUPER_ADMIN_PASSWORD must be at least 8 characters long."
+      );
+      return;
+    }
+  } else {
+    finalEmail = email || "superadmin@demo.com";
+    finalPassword = password || "123456";
+    finalUsername = username || "SUPERADMIN";
+  }
+
+  const hashedPassword = await bcrypt.hash(finalPassword, 10);
+  const existingSuperAdmin = await SuperAdmin.findOne({ email: finalEmail });
+
+  if (!existingSuperAdmin) {
     await SuperAdmin.create({
       name,
-      email,
+      email: finalEmail,
       password: hashedPassword,
-      username,
+      username: finalUsername,
       passwordUpdated: true,
       isActive: true,
     });
-    console.log("Dummy super admin added.");
+    console.log(
+      IS_PRODUCTION
+        ? "Super admin seeded from environment variables."
+        : "Dummy super admin added (development only)."
+    );
+  } else if (IS_PRODUCTION && existingSuperAdmin.isActive === false) {
+    // Re-activate a previously disabled/rotated account when the operator now
+    // supplies fresh credentials for it through the environment.
+    existingSuperAdmin.name = name;
+    existingSuperAdmin.email = finalEmail;
+    existingSuperAdmin.password = hashedPassword;
+    existingSuperAdmin.username = finalUsername;
+    existingSuperAdmin.isActive = true;
+    await existingSuperAdmin.save();
+    console.log("Super admin re-activated with credentials from environment variables.");
   } else {
-    console.log("Dummy super admin already exists.");
+    console.log("Super admin already exists.");
   }
 };
 
@@ -302,8 +379,16 @@ export const addDepartment = async (req, res) => {
       return res.status(400).json({ backendError: "Admin is already assigned to a department" });
     }
 
-    const departments = await Department.find({});
-    let departmentCode = (departments.length + 1).toString();
+    // Compute the next free numeric code from the highest existing code so
+    // that deleting a department can never collide with a later one (the
+    // departmentCode field is unique).
+    const departments = await Department.find({}).select("departmentCode");
+    let maxCode = 0;
+    departments.forEach((d) => {
+      const n = parseInt(d.departmentCode, 10);
+      if (!Number.isNaN(n) && n > maxCode) maxCode = n;
+    });
+    let departmentCode = (maxCode + 1).toString();
     if (departmentCode.length === 1) departmentCode = "0" + departmentCode;
 
     const newDepartment = await new Department({
@@ -387,6 +472,25 @@ export const deleteDepartment = async (req, res) => {
     const existingDepartment = await Department.findById(id);
     if (!existingDepartment) {
       return res.status(404).json({ backendError: "Department not found" });
+    }
+
+    // Guard against orphaning live data: branches, courses, subjects, faculty
+    // and students all hang off a department.
+    const [branchCount, courseCount, subjectCount, facultyCount, studentCount] =
+      await Promise.all([
+        Branch.countDocuments({ department: id }),
+        Course.countDocuments({ department: id }),
+        Subject.countDocuments({ department: existingDepartment.department }),
+        Faculty.countDocuments({ department: existingDepartment.department }),
+        Student.countDocuments({ department: existingDepartment.department }),
+      ]);
+    if (
+      branchCount + courseCount + subjectCount + facultyCount + studentCount > 0
+    ) {
+      return res.status(400).json({
+        backendError:
+          "Cannot delete a department that still has branches, courses, subjects, faculty or students. Deactivate it instead.",
+      });
     }
 
     if (existingDepartment.admin) {

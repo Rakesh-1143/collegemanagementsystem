@@ -10,6 +10,7 @@ import {
   GET_MY_STUDENTS,
   MARKS_UPLOADED,
   ATTENDANCE_MARKED,
+  GET_ME,
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
@@ -39,8 +40,11 @@ export const facultyUpdatePassword =
 
 export const updateFaculty = (formData) => async (dispatch) => {
   try {
-    await api.updateFaculty(formData);
+    const { data } = await api.updateFaculty(formData);
     dispatch({ type: UPDATE_FACULTY, payload: true });
+    // Reflect profile changes immediately in the header/profile UI.
+    dispatch({ type: GET_ME, payload: { role: "faculty", result: data } });
+    dispatch(notify("Profile updated successfully", "success"));
   } catch (error) {
     dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }

@@ -29,6 +29,7 @@ import {
   UPDATE_FACULTY,
   GET_SUBJECTS_BY_COURSE,
   UPDATE_SUBJECT,
+  GET_ME,
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
@@ -64,10 +65,9 @@ export const getAllStudent = () => async (dispatch) => {
   }
 };
 
-export const getAllDepartment = () => async (dispatch, getState) => {
+// No client-side caching: lists must stay fresh after add/update/delete flows.
+export const getAllDepartment = () => async (dispatch) => {
   try {
-    const state = getState();
-    if (state.admin.allDepartment && state.admin.allDepartment.length > 0) return;
     const { data } = await api.getAllDepartment();
     dispatch({ type: GET_ALL_DEPARTMENT, payload: data });
   } catch (error) {
@@ -94,8 +94,12 @@ export const getAllSubject = () => async (dispatch) => {
 
 export const updateAdmin = (formData) => async (dispatch) => {
   try {
-    await api.updateAdmin(formData);
+    const { data } = await api.updateAdmin(formData);
     dispatch({ type: UPDATE_ADMIN, payload: true });
+    // Refresh the session with the updated profile so the header/profile UI
+    // reflect the change immediately (no logout/re-login needed).
+    dispatch({ type: GET_ME, payload: { role: "admin", result: data } });
+    dispatch(notify("Profile updated successfully", "success"));
   } catch (error) {
     dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
@@ -129,10 +133,9 @@ export const addBranch = (formData) => async (dispatch) => {
   }
 };
 
-export const getBranches = () => async (dispatch, getState) => {
+// No client-side caching: branches must refresh after add/update/delete flows.
+export const getBranches = () => async (dispatch) => {
   try {
-    const state = getState();
-    if (state.admin.branches && state.admin.branches.length > 0) return;
     const { data } = await api.getBranches();
     dispatch({ type: GET_BRANCHES, payload: data.result });
   } catch (error) {
@@ -170,10 +173,9 @@ export const addCourse = (formData) => async (dispatch) => {
   }
 };
 
-export const getCourses = () => async (dispatch, getState) => {
+// No client-side caching: courses must refresh after add/update/delete flows.
+export const getCourses = () => async (dispatch) => {
   try {
-    const state = getState();
-    if (state.admin.courses && state.admin.courses.length > 0) return;
     const { data } = await api.getCourses();
     dispatch({ type: GET_COURSES, payload: data.result });
   } catch (error) {
@@ -221,8 +223,17 @@ export const deleteSubject = (formData) => async (dispatch) => {
 
 export const addFaculty = (formData) => async (dispatch) => {
   try {
-    await api.addFaculty(formData);
-    dispatch(notify("Faculty added successfully", "success"));
+    const { data } = await api.addFaculty(formData);
+    const username = data?.result?.username;
+    dispatch(
+      notify(
+        username
+          ? `Faculty added successfully. Username: ${username} (initial password: DOB in DD-MM-YYYY)`
+          : "Faculty added successfully",
+        "success",
+        6000
+      )
+    );
     dispatch({ type: ADD_FACULTY, payload: true });
   } catch (error) {
     dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
@@ -259,8 +270,17 @@ export const getSubject = (formData) => async (dispatch) => {
 
 export const addStudent = (formData) => async (dispatch) => {
   try {
-    await api.addStudent(formData);
-    dispatch(notify("Student added successfully", "success"));
+    const { data } = await api.addStudent(formData);
+    const username = data?.result?.username;
+    dispatch(
+      notify(
+        username
+          ? `Student added successfully. Username: ${username} (initial password: DOB in DD-MM-YYYY)`
+          : "Student added successfully",
+        "success",
+        6000
+      )
+    );
     dispatch({ type: ADD_STUDENT, payload: true });
   } catch (error) {
     dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });

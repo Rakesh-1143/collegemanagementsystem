@@ -47,8 +47,9 @@ const Body = () => {
     }
   }, [errors]);
 
+  // Turn the spinner off once a response arrives, even for empty result sets.
   useEffect(() => {
-    if (faculties?.length !== 0) setLoading(false);
+    setLoading(false);
   }, [faculties]);
 
   useEffect(() => {

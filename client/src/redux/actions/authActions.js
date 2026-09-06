@@ -11,7 +11,9 @@ export const restoreSession = () => async (dispatch) => {
       payload: { role: data.role, result: data.result },
     });
   } catch (error) {
-    dispatch({ type: GET_ME, payload: null });
+    // No valid session: clear any in-memory auth data from a previous login
+    // (e.g. after the token expired) so protected pages redirect to login.
+    dispatch({ type: LOGOUT });
   }
 };
 

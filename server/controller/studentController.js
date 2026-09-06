@@ -124,15 +124,22 @@ export const testResult = async (req, res) => {
     if (!student) {
       return res.status(404).json({ notestError: "Student not found" });
     }
+    // Scope tests to the subjects this student is enrolled in. (Do NOT filter
+    // by section: tests are created per subject with a default section, while
+    // students are grouped into numeric sections - filtering by section would
+    // hide every result.)
+    const enrolledSubjectCodes = await Subject.find({
+      _id: { $in: student.subjects || [] },
+    }).distinct("subjectCode");
     const test = await Test.find({
       department: student.department,
       year: student.year,
-      section: student.section,
+      subjectCode: { $in: enrolledSubjectCodes },
     });
-    if (test.length === 0) {
-      return res.status(404).json({ notestError: "No Test Found" });
-    }
     const result = [];
+    if (test.length === 0) {
+      return res.status(200).json({ result });
+    }
     for (const t of test) {
       const subject = await Subject.findOne({ subjectCode: t.subjectCode });
       const marks = await Marks.findOne({
@@ -167,7 +174,7 @@ export const attendance = async (req, res) => {
       student: student._id,
     }).populate("subject");
     if (!attendence || attendence.length === 0) {
-      return res.status(404).json({ message: "Attendance not found" });
+      return res.status(200).json({ result: [] });
     }
 
     res.status(200).json({

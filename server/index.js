@@ -14,7 +14,7 @@ import auth from "./middleware/auth.js";
 import { addDummyAdmin } from "./controller/adminController.js";
 import { addDummySuperAdmin } from "./controller/superAdminController.js";
 import { getMe, logout } from "./controller/authController.js";
-import { CLIENT_URL, IS_PRODUCTION } from "./config.js";
+import { CLIENT_URL } from "./config.js";
 
 const app = express();
 dotenv.config();
@@ -65,18 +65,12 @@ mongoose
     serverSelectionTimeoutMS: 10000,
   })
   .then(async () => {
-    // Always seed the SuperAdmin account (the function is idempotent –
-    // it skips creation if the record already exists in MongoDB).
+    // Seed the SuperAdmin only when explicitly configured (production) or with
+    // dev defaults (local). Both functions are idempotent.
     await addDummySuperAdmin();
-
-    if (!IS_PRODUCTION) {
-      // Only seed dummy Admins in development / staging.
-      await addDummyAdmin();
-    } else {
-      console.log(
-        "Production mode: dummy Admin seeding skipped. Add admins via the Super Admin dashboard."
-      );
-    }
+    // In production this never creates a dummy admin and additionally disables
+    // any previously seeded dev account (ADMDUMMY).
+    await addDummyAdmin();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((error) => console.log("Mongo Error", error.message));

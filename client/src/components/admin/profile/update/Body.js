@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import Spinner from "../../../../utils/Spinner";
-import { SET_ERRORS } from "../../../../redux/actionTypes";
+import { SET_ERRORS, UPDATE_ADMIN } from "../../../../redux/actionTypes";
 import { notify } from "../../../../redux/actions/notificationActions";
 import * as classes from "../../../../utils/styles";
 
@@ -52,7 +52,6 @@ const Body = () => {
       setLoading(false);
     } else {
       dispatch(updateAdmin(value));
-      dispatch(notify("Profile updated. Log in again to see the changes.", "info"));
     }
   };
 
@@ -63,6 +62,13 @@ const Body = () => {
       setLoading(true);
     }
   }, [errors, updatedAdmin]);
+
+  // Reset the success flag so the next submit can trigger the spinner again.
+  useEffect(() => {
+    if (updatedAdmin) {
+      dispatch({ type: UPDATE_ADMIN, payload: false });
+    }
+  }, [updatedAdmin, dispatch]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });

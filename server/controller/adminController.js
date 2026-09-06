@@ -6,7 +6,11 @@ import Subject from "../models/subject.js";
 import Notice from "../models/notice.js";
 import Branch from "../models/branch.js";
 import Course from "../models/course.js";
+import Attendance from "../models/attendance.js";
+import Marks from "../models/marks.js";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
+import { IS_PRODUCTION } from "../config.js";
 import {
   createAuthToken,
   sanitizeUser,
@@ -44,6 +48,12 @@ const getAdminDepartmentId = async (req) => {
   return department ? department._id : null;
 };
 
+// The department NAME the logged-in admin belongs to (or null if unassigned).
+const getAdminDepartmentName = async (req) => {
+  const admin = await Admin.findById(req.userId);
+  return admin && admin.department ? admin.department : null;
+};
+
 export const adminLogin = async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -62,6 +72,11 @@ export const adminLogin = async (req, res) => {
     );
     if (!isPasswordCorrect) {
       return res.status(404).json({ passwordError: "Invalid Credentials" });
+    }
+    if (existingAdmin.isActive === false) {
+      return res.status(403).json({
+        backendError: "Your account has been deactivated. Contact the Super Admin.",
+      });
     }
 
     const token = createAuthToken(existingAdmin._id, existingAdmin.email, "admin");
@@ -135,19 +150,41 @@ export const addDummyAdmin = async () => {
   const name = "dummy";
   const username = "ADMDUMMY";
 
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const existing = await Admin.findOne({ email });
 
-  const dummyAdmin = await Admin.findOne({ email });
+  // Production: never create the dev account, and if a dummy admin was seeded
+  // earlier (development mode) disable it and randomize its password so the
+  // well-known ADMDUMMY/123 credentials can no longer be used to log in.
+  if (IS_PRODUCTION) {
+    if (existing) {
+      if (existing.isActive !== false) {
+        existing.isActive = false;
+        existing.password = await bcrypt.hash(
+          crypto.randomBytes(32).toString("hex"),
+          10
+        );
+        await existing.save();
+        console.log(
+          "Production: development dummy admin found - account disabled and password randomized."
+        );
+      }
+    } else {
+      console.log("Production: dummy admin not created.");
+    }
+    return;
+  }
 
-  if (!dummyAdmin) {
+  if (!existing) {
+    const hashedPassword = await bcrypt.hash(password, 10);
     await Admin.create({
       name,
       email,
       password: hashedPassword,
       username,
       passwordUpdated: true,
+      isActive: true,
     });
-    console.log("Dummy user added.");
+    console.log("Dummy user added (development only).");
   } else {
     console.log("Dummy user already exists.");
   }
@@ -274,6 +311,18 @@ export const getFaculty = async (req, res) => {
     const { department, search, page = 1, limit = 1000 } = req.body;
     const query = department ? { department } : {};
 
+    // A department-level admin may only ever read faculty from their own
+    // department, regardless of what the request body asks for.
+    const adminDepartmentName = await getAdminDepartmentName(req);
+    if (adminDepartmentName) {
+      if (department && department !== adminDepartmentName) {
+        return res
+          .status(403)
+          .json({ backendError: "Unauthorized to view faculty outside your department" });
+      }
+      query.department = adminDepartmentName;
+    }
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -292,7 +341,12 @@ export const getFaculty = async (req, res) => {
       .lean();
 
     if (faculties.length === 0 && page === 1) {
-      return res.status(404).json({ noFacultyError: "No Faculty Found" });
+      return res.status(200).json({
+        result: [],
+        totalPages: 1,
+        currentPage: 1,
+        totalRecords: 0,
+      });
     }
     res.status(200).json({ result: faculties, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
   } catch (error) {
@@ -304,9 +358,6 @@ export const getFaculty = async (req, res) => {
 export const getNotice = async (req, res) => {
   try {
     const notices = await Notice.find({});
-    if (notices.length === 0) {
-      return res.status(404).json({ noNoticeError: "No Notice Found" });
-    }
     res.status(200).json({ result: notices });
   } catch (error) {
     console.error(error);
@@ -355,9 +406,17 @@ export const addSubject = async (req, res) => {
     });
 
     await newSubject.save();
+    // Enroll only students of the matching branch/course so subjects never
+    // leak across academic programs. Legacy subjects without branch/course
+    // keep enrolling everyone in the department/year.
+    const pushFilter = { department, year };
+    if (existingBranch && existingCourse) {
+      pushFilter.branch = existingBranch._id;
+      pushFilter.course = existingCourse._id;
+    }
     await Student.updateMany(
-      { department, year },
-      { $push: { subjects: newSubject._id } }
+      pushFilter,
+      { $addToSet: { subjects: newSubject._id } }
     );
     return res.status(200).json({
       success: true,
@@ -372,17 +431,44 @@ export const addSubject = async (req, res) => {
 
 export const getSubject = async (req, res) => {
   try {
+    // Students see exactly the subjects they are enrolled in (their own
+    // branch/course), never every subject in a department/year.
+    if (req.role === "student") {
+      const student = await Student.findById(req.userId);
+      if (!student) {
+        return res.status(404).json({ noSubjectError: "Student not found" });
+      }
+      const enrolled = await Subject.find({
+        _id: { $in: student.subjects || [] },
+      })
+        .populate("branch course")
+        .lean();
+      return res.status(200).json({
+        result: enrolled,
+        totalPages: 1,
+        currentPage: 1,
+        totalRecords: enrolled.length,
+      });
+    }
+
     const { department, year, branch, course, search, page = 1, limit = 1000 } = req.body;
-    
+
     const adminDepartmentId = await getAdminDepartmentId(req);
+    let effectiveDepartment = department;
     if (adminDepartmentId) {
-      const requestedDept = await Department.findOne({ department });
-      if (!requestedDept || requestedDept._id.toString() !== adminDepartmentId.toString()) {
-         return res.status(403).json({ backendError: "Unauthorized to view subjects for this department" });
+      if (department) {
+        const requestedDept = await Department.findOne({ department });
+        if (!requestedDept || requestedDept._id.toString() !== adminDepartmentId.toString()) {
+          return res.status(403).json({ backendError: "Unauthorized to view subjects for this department" });
+        }
+      } else {
+        // Admin must always search inside their own department.
+        const admin = await Admin.findById(req.userId);
+        effectiveDepartment = admin?.department;
       }
     }
 
-    const query = { department, year };
+    const query = { department: effectiveDepartment, year };
     if (branch) query.branch = branch;
     if (course) query.course = course;
 
@@ -402,7 +488,12 @@ export const getSubject = async (req, res) => {
       .lean();
 
     if (subjects.length === 0 && page === 1) {
-      return res.status(404).json({ noSubjectError: "No Subject Found" });
+      return res.status(200).json({
+        result: [],
+        totalPages: 1,
+        currentPage: 1,
+        totalRecords: 0,
+      });
     }
     res.status(200).json({ result: subjects, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
   } catch (error) {
@@ -486,6 +577,9 @@ export const deleteStudent = async (req, res) => {
         if (adminDepartmentId && dept && dept._id.toString() !== adminDepartmentId.toString()) {
           return res.status(403).json({ backendError: "Unauthorized" });
         }
+        // Cascade: remove attendance + marks records so no orphan rows remain.
+        await Attendance.deleteMany({ student: studentId });
+        await Marks.deleteMany({ student: studentId });
         await Student.findOneAndDelete({ _id: studentId });
       }
     }
@@ -509,6 +603,13 @@ export const deleteSubject = async (req, res) => {
         if (adminDepartmentId && dept && dept._id.toString() !== adminDepartmentId.toString()) {
           return res.status(403).json({ backendError: "Unauthorized" });
         }
+        // Cascade: drop the subject from students' lists and delete attendance
+        // records for it so no orphan references remain.
+        await Student.updateMany(
+          { subjects: subjectId },
+          { $pull: { subjects: subjectId } }
+        );
+        await Attendance.deleteMany({ subject: subjectId });
         await Subject.findOneAndDelete({ _id: subjectId });
       }
     }
@@ -575,7 +676,16 @@ export const addStudent = async (req, res) => {
     );
     const hashedPassword = await bcrypt.hash(initialPasswordFromDob(dob), 10);
 
-    const subjects = await Subject.find({ department, year }, '_id');
+    // Enroll only subjects that belong to the student's own branch/course
+    // (plus legacy subjects that were created without a branch/course).
+    const subjectQuery = { department, year };
+    if (branch && course) {
+      subjectQuery.$or = [
+        { branch, course },
+        { branch: { $exists: false }, course: { $exists: false } },
+      ];
+    }
+    const subjects = await Subject.find(subjectQuery, "_id");
     const subjectIds = subjects.map(s => s._id);
 
     const newStudent = await new Student({
@@ -618,6 +728,17 @@ export const getStudent = async (req, res) => {
     const { department, year, search, page = 1, limit = 1000 } = req.body;
     const query = { department, year };
 
+    // A department-level admin may only read students from their own department.
+    const adminDepartmentName = await getAdminDepartmentName(req);
+    if (adminDepartmentName) {
+      if (department && department !== adminDepartmentName) {
+        return res
+          .status(403)
+          .json({ backendError: "Unauthorized to view students outside your department" });
+      }
+      query.department = adminDepartmentName;
+    }
+
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -635,7 +756,12 @@ export const getStudent = async (req, res) => {
       .lean();
 
     if (students.length === 0 && page === 1) {
-      return res.status(404).json({ noStudentError: "No Student Found" });
+      return res.status(200).json({
+        result: [],
+        totalPages: 1,
+        currentPage: 1,
+        totalRecords: 0,
+      });
     }
 
     res.status(200).json({ result: students, totalPages: Math.ceil(total / limit), currentPage: page, totalRecords: total });
@@ -848,7 +974,11 @@ export const deleteCourse = async (req, res) => {
     const course = await Course.findOne({ _id, department: departmentId });
     if (!course) return res.status(404).json({ backendError: "Course not found or unauthorized" });
 
-    // Note: If subjects/students depend on this, ideally we shouldn't delete. For now just delete.
+    const subjects = await Subject.find({ course: _id });
+    if (subjects.length > 0) {
+      return res.status(400).json({ backendError: "Cannot delete course with existing subjects. Deactivate it instead." });
+    }
+
     await Course.findByIdAndDelete(_id);
     res.status(200).json({ message: "Course deleted successfully" });
   } catch (error) {

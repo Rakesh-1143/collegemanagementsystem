@@ -126,16 +126,12 @@ export const getMyStudents = async (req, res) => {
   try {
     const faculty = await Faculty.findById(req.userId);
     if (!faculty || !faculty.subject) {
-      return res.status(404).json({ noStudentError: "No assigned subject found for faculty" });
+      return res.status(200).json({ result: [] });
     }
 
     const students = await Student.find({ subjects: faculty.subject })
       .select("-password")
       .populate("branch course");
-      
-    if (students.length === 0) {
-      return res.status(404).json({ noStudentError: "No Student Found for your subject" });
-    }
     res.status(200).json({ result: students });
   } catch (error) {
     console.error(error);
@@ -156,9 +152,6 @@ export const getStudent = async (req, res) => {
     }
 
     const students = await Student.find(query).select("-password");
-    if (students.length === 0) {
-      return res.status(404).json({ noStudentError: "No Student Found" });
-    }
     res.status(200).json({ result: students });
   } catch (error) {
     console.error(error);
@@ -263,11 +256,24 @@ export const uploadMarks = async (req, res) => {
       return res.status(400).json({ examError: "You have already uploaded marks of given exam" });
     }
 
+    // Validate the whole batch up front - never silently drop individual
+    // rows, otherwise some students would get marks and others would not.
+    const invalid = marks.filter(
+      (m) =>
+        !m ||
+        !m._id ||
+        typeof m.value !== "number" ||
+        Number.isNaN(m.value) ||
+        m.value < 0 ||
+        m.value > existingTest.totalMarks
+    );
+    if (invalid.length > 0) {
+      return res.status(400).json({
+        examError: `Marks must be numbers between 0 and ${existingTest.totalMarks}`,
+      });
+    }
+
     for (const mark of marks) {
-      // Validation against total marks
-      if (mark.value > existingTest.totalMarks || mark.value < 0) {
-         continue; // Skip invalid marks or throw error
-      }
       const newMarks = await new Marks({
         student: mark._id,
         exam: existingTest._id,
@@ -303,8 +309,14 @@ export const markAttendance = async (req, res) => {
     const sub = faculty.subject;
 
     const allStudents = await Student.find({ subjects: sub._id });
+    if (allStudents.length === 0) {
+      return res.status(400).json({
+        backendError: "No students are enrolled in your subject, so attendance cannot be marked.",
+      });
+    }
 
     // Mark attendance
+    let newlyMarked = 0;
     for (const student of allStudents) {
       const isPresent = selectedStudents.includes(student._id.toString());
       
@@ -334,8 +346,15 @@ export const markAttendance = async (req, res) => {
       
       if (!pre.history) pre.history = [];
       pre.history.push({ date, present: isPresent });
+      newlyMarked += 1;
       
       await pre.save();
+    }
+
+    if (newlyMarked === 0) {
+      return res.status(400).json({
+        backendError: "Attendance for this date has already been marked.",
+      });
     }
 
     res.status(200).json({ message: "Attendance Marked successfully" });

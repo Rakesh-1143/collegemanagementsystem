@@ -7,6 +7,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Spinner from "../../../utils/Spinner";
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import { Link } from "react-router-dom";
+import { SET_ERRORS } from "../../../redux/actionTypes";
 
 const FacultyLogin = () => {
   const [username, setUsername] = useState("");
@@ -22,6 +23,11 @@ const FacultyLogin = () => {
       setError(errors);
     }
   }, [errors]);
+
+  // Clear any error left over from another portal / page.
+  useEffect(() => {
+    dispatch({ type: SET_ERRORS, payload: {} });
+  }, [dispatch]);
 
   const login = (e) => {
     e.preventDefault();
@@ -86,9 +92,9 @@ const FacultyLogin = () => {
             </div>
           </div>
 
-          {(error.usernameError || error.passwordError) && (
+          {(error.usernameError || error.passwordError || error.backendError) && (
             <div className="rounded-lg border border-red-100 bg-red-50 p-3 text-sm font-medium text-red-600">
-              {error.usernameError || error.passwordError}
+              {error.usernameError || error.passwordError || error.backendError}
             </div>
           )}
 

@@ -14,6 +14,7 @@ import {
   UPDATE_DEPARTMENT_STATUS,
   GET_UNASSIGNED_ADMINS,
   GET_SUPER_ADMIN_DEPARTMENTS,
+  GET_ME,
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
@@ -48,8 +49,10 @@ export const superAdminUpdatePassword = (formData, navigate) => async (dispatch)
 
 export const updateSuperAdmin = (formData) => async (dispatch) => {
   try {
-    await api.updateSuperAdmin(formData);
+    const { data } = await api.updateSuperAdmin(formData);
     dispatch({ type: UPDATE_SUPER_ADMIN, payload: true });
+    // Reflect profile changes immediately in the header/profile UI.
+    dispatch({ type: GET_ME, payload: { role: "superadmin", result: data } });
     dispatch(notify("Profile updated successfully", "success"));
   } catch (error) {
     dispatch({
@@ -61,8 +64,17 @@ export const updateSuperAdmin = (formData) => async (dispatch) => {
 
 export const addAdmin = (formData) => async (dispatch) => {
   try {
-    await api.addAdmin(formData);
-    dispatch(notify("Admin added successfully", "success"));
+    const { data } = await api.addAdmin(formData);
+    const username = data?.result?.username;
+    dispatch(
+      notify(
+        username
+          ? `Admin added successfully. Username: ${username} (initial password: DOB in DD-MM-YYYY)`
+          : "Admin added successfully",
+        "success",
+        6000
+      )
+    );
     dispatch({ type: ADD_ADMIN, payload: true });
   } catch (error) {
     dispatch({
