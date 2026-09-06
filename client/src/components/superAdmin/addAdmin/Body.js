@@ -22,6 +22,7 @@ const Body = () => {
     avatar: "",
     joiningYear: Date().split(" ")[3],
   });
+
   useEffect(() => {
     if (Object.keys(errors).length !== 0) {
       setError(errors);
@@ -66,81 +67,73 @@ const Body = () => {
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
         <PageHeader icon={EngineeringIcon} title="Add Admin" subtitle="Create a new administrator account" />
-        <div className="bg-white flex flex-col rounded-xl lg:mr-10 ">
+        <div className="bg-white flex flex-col rounded-xl lg:mr-10">
           <form className={classes.adminForm0} onSubmit={handleSubmit}>
             <div className={classes.adminForm1}>
+              {/* Left column: Name, DOB, Email */}
               <div className={classes.adminForm2l}>
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Name :</h1>
-
                   <input
                     placeholder="Full Name"
                     required
                     className={classes.adminInput}
                     type="text"
                     value={value.name}
-                    onChange={(e) =>
-                      setValue({ ...value, name: e.target.value })
-                    }
+                    onChange={(e) => setValue({ ...value, name: e.target.value })}
                   />
                 </div>
 
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>DOB :</h1>
-
                   <input
                     placeholder="DD/MM/YYYY"
                     className={classes.adminInput}
                     required
                     type="date"
                     value={value.dob}
-                    onChange={(e) =>
-                      setValue({ ...value, dob: e.target.value })
-                    }
+                    onChange={(e) => setValue({ ...value, dob: e.target.value })}
                   />
                 </div>
+
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Email :</h1>
-
                   <input
                     placeholder="Email"
                     required
                     className={classes.adminInput}
                     type="email"
                     value={value.email}
-                    onChange={(e) =>
-                      setValue({ ...value, email: e.target.value })
-                    }
+                    onChange={(e) => setValue({ ...value, email: e.target.value })}
                   />
                 </div>
               </div>
+
+              {/* Right column: Contact Number, Avatar */}
+              <div className={classes.adminForm2r}>
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Contact Number :</h1>
-
                   <input
                     required
                     placeholder="Contact Number"
                     className={classes.adminInput}
                     type="number"
                     value={value.contactNumber}
-                    onChange={(e) =>
-                      setValue({ ...value, contactNumber: e.target.value })
-                    }
+                    onChange={(e) => setValue({ ...value, contactNumber: e.target.value })}
                   />
                 </div>
+
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Avatar :</h1>
-
                   <FileBase
                     type="file"
                     multiple={false}
-                    onDone={({ base64 }) =>
-                      setValue({ ...value, avatar: base64 })
-                    }
+                    onDone={({ base64 }) => setValue({ ...value, avatar: base64 })}
                   />
                 </div>
               </div>
             </div>
+
             <div className={classes.adminFormButton}>
               <button className={classes.adminFormSubmitButton} type="submit">
                 Submit
@@ -160,10 +153,12 @@ const Body = () => {
                   setError({});
                 }}
                 className={classes.adminFormClearButton}
-                type="button">
+                type="button"
+              >
                 Clear
               </button>
             </div>
+
             <div className={classes.loadingAndError}>
               {loading && (
                 <Spinner
@@ -180,6 +175,7 @@ const Body = () => {
                 </p>
               )}
             </div>
+
             <p className="px-6 pb-4 text-sm text-slate-500">
               The username is auto-generated (e.g. ADM2026UN001 if unassigned). The initial
               password is the date of birth in DD-MM-YYYY format, and the new
