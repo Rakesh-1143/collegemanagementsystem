@@ -4,26 +4,25 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Spinner from "../../../../../utils/Spinner";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { adminUpdatePassword } from "../../../../../redux/actions/adminActions";
-import * as classes from "../../../../../utils/styles";
 import { facultyUpdatePassword } from "../../../../../redux/actions/facultyActions";
+import * as classes from "../../../../../utils/styles";
+
 const Body = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
-  const store = useSelector((state) => state);
+  const errors = useSelector((state) => state.errors);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
       setLoading(false);
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const update = (e) => {
     e.preventDefault();
@@ -34,7 +33,6 @@ const Body = () => {
         {
           newPassword: newPassword,
           confirmPassword: confirmPassword,
-          email: user.result.email,
         },
         navigate
       )
@@ -42,12 +40,12 @@ const Body = () => {
   };
 
   useEffect(() => {
-    if (store.errors) {
+    if (errors) {
       setLoading(false);
       setNewPassword("");
       setConfirmPassword("");
     }
-  }, [store.errors]);
+  }, [errors]);
 
   return (
     <div className="flex-[0.8] mt-3">
@@ -57,7 +55,7 @@ const Body = () => {
           <h1>Password</h1>
         </div>
 
-        <div className=" mr-10 bg-white flex flex-col rounded-xl ">
+        <div className="bg-white flex flex-col rounded-xl lg:mr-10 ">
           <form
             onSubmit={update}
             className="flex flex-col space-y-6 items-center my-8">
@@ -117,7 +115,7 @@ const Body = () => {
                 Update
               </button>
               <button
-                onClick={() => navigate("/admin/profile")}
+                onClick={() => navigate("/faculty/profile")}
                 className={classes.adminFormClearButton}
                 type="button">
                 Cancel
@@ -132,9 +130,9 @@ const Body = () => {
                 messageColor="#blue"
               />
             )}
-            {(error.mismatchError || error.backendError) && (
+            {(error.mismatchError || error.backendError || error.passwordError) && (
               <p className="text-red-500">
-                {error.mismatchError || error.backendError}
+                {error.mismatchError || error.backendError || error.passwordError}
               </p>
             )}
           </form>

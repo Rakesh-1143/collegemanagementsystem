@@ -1,72 +1,79 @@
-import student from "../models/student.js";
-import Test from "../models/test.js";
 import Student from "../models/student.js";
+import Test from "../models/test.js";
 import Subject from "../models/subject.js";
 import Marks from "../models/marks.js";
 import Attendence from "../models/attendance.js";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import {
+  createAuthToken,
+  sanitizeUser,
+  setAuthCookie,
+} from "../utils/auth.js";
 
 export const studentLogin = async (req, res) => {
   const { username, password } = req.body;
-  const errors = { usernameError: String, passwordError: String };
   try {
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ usernameError: "Username and password are required" });
+    }
     const existingStudent = await Student.findOne({ username });
     if (!existingStudent) {
-      errors.usernameError = "Student doesn't exist.";
-      return res.status(404).json(errors);
+      return res.status(404).json({ usernameError: "Student doesn't exist." });
     }
     const isPasswordCorrect = await bcrypt.compare(
       password,
       existingStudent.password
     );
     if (!isPasswordCorrect) {
-      errors.passwordError = "Invalid Credentials";
-      return res.status(404).json(errors);
+      return res.status(404).json({ passwordError: "Invalid Credentials" });
     }
 
-    const token = jwt.sign(
-      {
-        email: existingStudent.email,
-        id: existingStudent._id,
-      },
-      "sEcReT",
-      { expiresIn: "1h" }
+    const token = createAuthToken(
+      existingStudent._id,
+      existingStudent.email,
+      "student"
     );
+    setAuthCookie(res, token);
 
-    res.status(200).json({ result: existingStudent, token: token });
+    res.status(200).json({ result: sanitizeUser(existingStudent) });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const updatedPassword = async (req, res) => {
   try {
-    const { newPassword, confirmPassword, email } = req.body;
-    const errors = { mismatchError: String };
+    const { newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
-      errors.mismatchError =
-        "Your password and confirmation password do not match";
-      return res.status(400).json(errors);
+      return res.status(400).json({
+        mismatchError: "Your password and confirmation password do not match",
+      });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        passwordError: "Password must be at least 6 characters long",
+      });
     }
 
-    const student = await Student.findOne({ email });
-    let hashedPassword;
-    hashedPassword = await bcrypt.hash(newPassword, 10);
-    student.password = hashedPassword;
-    await student.save();
-    if (student.passwordUpdated === false) {
-      student.passwordUpdated = true;
-      await student.save();
+    const student = await Student.findById(req.userId);
+    if (!student) {
+      return res.status(404).json({ backendError: "Student not found" });
     }
+    student.password = await bcrypt.hash(newPassword, 10);
+    student.passwordUpdated = true;
+    await student.save();
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
-      response: student,
+      response: sanitizeUser(student),
     });
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
@@ -78,7 +85,6 @@ export const updateStudent = async (req, res) => {
       department,
       contactNumber,
       avatar,
-      email,
       batch,
       section,
       year,
@@ -86,122 +92,100 @@ export const updateStudent = async (req, res) => {
       motherName,
       fatherContactNumber,
     } = req.body;
-    const updatedStudent = await Student.findOne({ email });
-    if (name) {
-      updatedStudent.name = name;
-      await updatedStudent.save();
+    const student = await Student.findById(req.userId);
+    if (!student) {
+      return res.status(404).json({ backendError: "Student not found" });
     }
-    if (dob) {
-      updatedStudent.dob = dob;
-      await updatedStudent.save();
-    }
-    if (department) {
-      updatedStudent.department = department;
-      await updatedStudent.save();
-    }
-    if (contactNumber) {
-      updatedStudent.contactNumber = contactNumber;
-      await updatedStudent.save();
-    }
-    if (batch) {
-      updatedStudent.batch = batch;
-      await updatedStudent.save();
-    }
-    if (section) {
-      updatedStudent.section = section;
-      await updatedStudent.save();
-    }
-    if (year) {
-      updatedStudent.year = year;
-      await updatedStudent.save();
-    }
-    if (motherName) {
-      updatedStudent.motherName = motherName;
-      await updatedStudent.save();
-    }
-    if (fatherName) {
-      updatedStudent.fatherName = fatherName;
-      await updatedStudent.save();
-    }
-    if (fatherContactNumber) {
-      updatedStudent.fatherContactNumber = fatherContactNumber;
-      await updatedStudent.save();
-    }
-    if (avatar) {
-      updatedStudent.avatar = avatar;
-      await updatedStudent.save();
-    }
-    res.status(200).json(updatedStudent);
+    if (name) student.name = name;
+    if (dob) student.dob = dob;
+    if (department) student.department = department;
+    if (contactNumber) student.contactNumber = contactNumber;
+    if (batch) student.batch = batch;
+    if (section) student.section = section;
+    if (year) student.year = year;
+    if (motherName) student.motherName = motherName;
+    if (fatherName) student.fatherName = fatherName;
+    if (fatherContactNumber) student.fatherContactNumber = fatherContactNumber;
+    if (avatar) student.avatar = avatar;
+    await student.save();
+
+    res.status(200).json(sanitizeUser(student));
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
+// Returns the marks of the LOGGED-IN student (not the first student in the
+// section, which is what the original implementation did).
 export const testResult = async (req, res) => {
   try {
-    const { department, year, section } = req.body;
-    const errors = { notestError: String };
-    const student = await Student.findOne({ department, year, section });
-    const test = await Test.find({ department, year, section });
-    if (test.length === 0) {
-      errors.notestError = "No Test Found";
-      return res.status(404).json(errors);
+    const student = await Student.findById(req.userId);
+    if (!student) {
+      return res.status(404).json({ notestError: "Student not found" });
     }
-    var result = [];
-    for (var i = 0; i < test.length; i++) {
-      var subjectCode = test[i].subjectCode;
-      var subject = await Subject.findOne({ subjectCode });
-      var marks = await Marks.findOne({
+    const test = await Test.find({
+      department: student.department,
+      year: student.year,
+      section: student.section,
+    });
+    if (test.length === 0) {
+      return res.status(404).json({ notestError: "No Test Found" });
+    }
+    const result = [];
+    for (const t of test) {
+      const subject = await Subject.findOne({ subjectCode: t.subjectCode });
+      const marks = await Marks.findOne({
         student: student._id,
-        exam: test[i]._id,
+        exam: t._id,
       });
-      if (marks) {
-        var temp = {
+      if (marks && subject) {
+        result.push({
           marks: marks.marks,
-          totalMarks: test[i].totalMarks,
+          totalMarks: t.totalMarks,
           subjectName: subject.subjectName,
-          subjectCode,
-          test: test[i].test,
-        };
-
-        result.push(temp);
+          subjectCode: t.subjectCode,
+          test: t.test,
+        });
       }
     }
-
     res.status(200).json({ result });
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
+// Returns the attendance of the LOGGED-IN student.
 export const attendance = async (req, res) => {
   try {
-    const { department, year, section } = req.body;
-    const errors = { notestError: String };
-    const student = await Student.findOne({ department, year, section });
-
+    const student = await Student.findById(req.userId);
+    if (!student) {
+      return res.status(404).json({ notestError: "Student not found" });
+    }
     const attendence = await Attendence.find({
       student: student._id,
     }).populate("subject");
-    if (!attendence) {
-      res.status(400).json({ message: "Attendence not found" });
+    if (!attendence || attendence.length === 0) {
+      return res.status(404).json({ message: "Attendance not found" });
     }
 
     res.status(200).json({
-      result: attendence.map((att) => {
-        let res = {};
-        res.percentage = (
-          (att.lectureAttended / att.totalLecturesByFaculty) *
-          100
-        ).toFixed(2);
-        res.subjectCode = att.subject.subjectCode;
-        res.subjectName = att.subject.subjectName;
-        res.attended = att.lectureAttended;
-        res.total = att.totalLecturesByFaculty;
-        return res;
-      }),
+      result: attendence
+        .filter((att) => att.subject)
+        .map((att) => ({
+          percentage:
+            att.totalLecturesByFaculty > 0
+              ? ((att.lectureAttended / att.totalLecturesByFaculty) * 100).toFixed(2)
+              : "0.00",
+          subjectCode: att.subject.subjectCode,
+          subjectName: att.subject.subjectName,
+          attended: att.lectureAttended,
+          total: att.totalLecturesByFaculty,
+        })),
     });
   } catch (error) {
-    res.status(500).json(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };

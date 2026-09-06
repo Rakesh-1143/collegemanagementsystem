@@ -1,266 +1,189 @@
-import React, { useEffect, useState } from "react";
-import BoyIcon from "@mui/icons-material/Boy";
+import React, { useEffect, useState, useMemo } from "react";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getStudent,
-  markAttendance,
-} from "../../../redux/actions/facultyActions";
-import { MenuItem, Select } from "@mui/material";
+import { getMyStudents, markAttendance } from "../../../redux/actions/facultyActions";
 import Spinner from "../../../utils/Spinner";
-import * as classes from "../../../utils/styles";
 import { ATTENDANCE_MARKED, SET_ERRORS } from "../../../redux/actionTypes";
-import { getTest } from "../../../redux/actions/facultyActions";
-import { getSubject } from "../../../redux/actions/adminActions";
+import PageHeader from "../../common/PageHeader";
+import EmptyState from "../../common/EmptyState";
+
 const Body = () => {
   const dispatch = useDispatch();
-  const user = JSON.parse(localStorage.getItem("user"));
-  const departments = useSelector((state) => state.admin.allDepartment);
-  const subjects = useSelector((state) => state.admin.subjects.result);
-
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
-  const store = useSelector((state) => state);
-  const [subjectName, setSubjectName] = useState("");
+  const errors = useSelector((state) => state.errors);
+  const attendanceUploaded = useSelector((state) => state.faculty.attendanceUploaded);
+  const myStudents = useSelector((state) => state.faculty.myStudents) || [];
+  
+  const [date, setDate] = useState("");
   const [checkedValue, setCheckedValue] = useState([]);
-
-  const [value, setValue] = useState({
-    department: "",
-    year: "",
-    section: "",
-  });
-  const [search, setSearch] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
-      setLoading(false);
-      setValue({ department: "", year: "", section: "" });
-    }
-  }, [store.errors]);
+    // Load students on mount
+    dispatch(getMyStudents());
+  }, [dispatch]);
 
-  const handleInputChange = (e) => {
-    const tempCheck = checkedValue;
-    let index;
-    if (e.target.checked) {
-      tempCheck.push(e.target.value);
-    } else {
-      index = tempCheck.indexOf(e.target.value);
-      tempCheck.splice(index, 1);
+  useEffect(() => {
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
+      setLoading(false);
     }
-    setCheckedValue(tempCheck);
+  }, [errors]);
+
+  const handleCheckboxChange = (id) => {
+    setCheckedValue((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked;
+    setSelectAll(isChecked);
+    if (isChecked) {
+      setCheckedValue(myStudents.map(s => s._id));
+    } else {
+      setCheckedValue([]);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setSearch(true);
+    if (!date) {
+      setError({ backendError: "Please select a date." });
+      return;
+    }
+    setError({});
     setLoading(true);
-    setError({});
-    dispatch(getStudent(value));
-    dispatch(getSubject({ department: value.department, year: value.year }));
-  };
-  const students = useSelector((state) => state.admin.students.result);
-
-  const uploadAttendance = (e) => {
-    setError({});
-    dispatch(
-      markAttendance(
-        checkedValue,
-        subjectName,
-        value.department,
-        value.year,
-        value.section
-      )
-    );
+    dispatch(markAttendance(checkedValue, date));
   };
 
   useEffect(() => {
-    if (store.errors || store.faculty.attendanceUploaded) {
+    if (errors || attendanceUploaded) {
       setLoading(false);
-      if (store.faculty.attendanceUploaded) {
-        setValue({ department: "", year: "", section: "" });
-        setSearch(false);
-        setSubjectName("");
+      if (attendanceUploaded) {
+        setDate("");
+        setCheckedValue([]);
+        setSelectAll(false);
         dispatch({ type: SET_ERRORS, payload: {} });
         dispatch({ type: ATTENDANCE_MARKED, payload: false });
       }
     } else {
       setLoading(true);
     }
-  }, [store.errors, store.faculty.attendanceUploaded]);
-
-  useEffect(() => {
-    if (store.faculty.attendanceUploaded) {
-      setValue({ department: "", year: "", section: "" });
-    }
-  }, [store.faculty.attendanceUploaded]);
-
-  useEffect(() => {
-    if (students?.length !== 0) setLoading(false);
-  }, [students]);
+  }, [errors, attendanceUploaded, dispatch]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
-  }, []);
+  }, [dispatch]);
 
   return (
-    <div className="flex-[0.8] mt-3">
-      <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <BoyIcon />
-          <h1>All Students</h1>
-        </div>
-        <div className=" mr-10 bg-white grid grid-cols-4 rounded-xl pt-6 pl-6 h-[29.5rem]">
-          <form
-            className="flex flex-col space-y-2 col-span-1"
-            onSubmit={handleSubmit}>
-            <label htmlFor="department">Department</label>
-            <Select
-              required
-              displayEmpty
-              sx={{ height: 36, width: 224 }}
-              inputProps={{ "aria-label": "Without label" }}
-              value={value.department}
-              onChange={(e) =>
-                setValue({ ...value, department: e.target.value })
-              }>
-              <MenuItem value="">None</MenuItem>
-              {departments?.map((dp, idx) => (
-                <MenuItem key={idx} value={dp.department}>
-                  {dp.department}
-                </MenuItem>
-              ))}
-            </Select>
-            <label htmlFor="year">Year</label>
-            <Select
-              required
-              displayEmpty
-              sx={{ height: 36, width: 224 }}
-              inputProps={{ "aria-label": "Without label" }}
-              value={value.year}
-              onChange={(e) => setValue({ ...value, year: e.target.value })}>
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="1">1</MenuItem>
-              <MenuItem value="2">2</MenuItem>
-              <MenuItem value="3">3</MenuItem>
-              <MenuItem value="4">4</MenuItem>
-            </Select>
-            <label htmlFor="section">Section</label>
-            <Select
-              required
-              displayEmpty
-              sx={{ height: 36, width: 224 }}
-              inputProps={{ "aria-label": "Without label" }}
-              value={value.section}
-              onChange={(e) => setValue({ ...value, section: e.target.value })}>
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="1">1</MenuItem>
-              <MenuItem value="2">2</MenuItem>
-              <MenuItem value="3">3</MenuItem>
-            </Select>
+    <div className="w-full space-y-6 pb-10">
+      <PageHeader
+        icon={EventAvailableIcon}
+        title="Mark Attendance"
+        subtitle="Select the date and mark students as present."
+      />
 
-            <button
-              className={`${classes.adminFormSubmitButton} w-56`}
-              type="submit">
-              Search
-            </button>
-          </form>
-          <div className="col-span-3 mr-6">
-            <div className={classes.loadingAndError}>
-              {loading && (
-                <Spinner
-                  message="Loading"
-                  height={50}
-                  width={150}
-                  color="#111111"
-                  messageColor="blue"
-                />
-              )}
-              {(error.noStudentError || error.backendError) && (
-                <p className="text-red-500 text-2xl font-bold">
-                  {error.noStudentError || error.backendError}
-                </p>
-              )}
-            </div>
-            {search &&
-              !loading &&
-              Object.keys(error).length === 0 &&
-              students?.length !== 0 && (
-                <div className={`${classes.adminData} h-[20rem]`}>
-                  <div className="grid grid-cols-7">
-                    <h1 className={`col-span-1 ${classes.adminDataHeading}`}>
-                      Select
-                    </h1>
-                    <h1 className={`col-span-1 ${classes.adminDataHeading}`}>
-                      Sr no.
-                    </h1>
-                    <h1 className={`col-span-2 ${classes.adminDataHeading}`}>
-                      Name
-                    </h1>
-                    <h1 className={`col-span-2 ${classes.adminDataHeading}`}>
-                      Username
-                    </h1>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
+          
+          <div className="p-6 sm:p-8 space-y-6 bg-slate-50/50">
+            <h2 className="text-lg font-semibold text-gray-900">Attendance Details</h2>
+            
+            {(error.backendError || error.attendanceError) && (
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4 mb-4 text-sm font-medium text-red-700">
+                {error.backendError || error.attendanceError}
+              </div>
+            )}
 
-                    <h1 className={`col-span-1 ${classes.adminDataHeading}`}>
-                      Section
-                    </h1>
-                  </div>
-                  {students?.map((stu, idx) => (
-                    <div
-                      key={idx}
-                      className={`${classes.adminDataBody} grid-cols-7`}>
-                      <input
-                        onChange={handleInputChange}
-                        value={stu._id}
-                        className="col-span-1 border-2 w-16 h-4 mt-3 px-2 "
-                        type="checkbox"
-                      />
-                      <h1
-                        className={`col-span-1 ${classes.adminDataBodyFields}`}>
-                        {idx + 1}
-                      </h1>
-                      <h1
-                        className={`col-span-2 ${classes.adminDataBodyFields}`}>
-                        {stu.name}
-                      </h1>
-                      <h1
-                        className={`col-span-2 ${classes.adminDataBodyFields}`}>
-                        {stu.username}
-                      </h1>
-
-                      <h1
-                        className={`col-span-1 ${classes.adminDataBodyFields}`}>
-                        {stu.section}
-                      </h1>
-                    </div>
-                  ))}
-                </div>
-              )}
-            {search && Object.keys(error).length === 0 && (
-              <div className="space-x-3 flex items-center justify-center mt-5">
-                <label className="font-bold text-lg">Subject</label>
-                <Select
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Date <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
                   required
-                  displayEmpty
-                  sx={{ height: 36, width: 224 }}
-                  inputProps={{ "aria-label": "Without label" }}
-                  value={subjectName}
-                  onChange={(e) => setSubjectName(e.target.value)}>
-                  <MenuItem value="">None</MenuItem>
-                  {subjects?.map((dp, idx) => (
-                    <MenuItem key={idx} value={dp.subjectName}>
-                      {dp.subjectName}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <button
-                  onClick={uploadAttendance}
-                  className={`${classes.adminFormSubmitButton} bg-blue-500`}>
-                  Mark
-                </button>
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-0">
+            {myStudents.length === 0 ? (
+               <div className="p-6">
+                 <EmptyState
+                    title="No Students Enrolled"
+                    hint="You cannot mark attendance because there are no students assigned to your subject."
+                  />
+               </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-900 w-16">
+                        <input 
+                          type="checkbox"
+                          checked={selectAll}
+                          onChange={handleSelectAll}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                        />
+                      </th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-900">Sr No.</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-900">Roll Number</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-900">Name</th>
+                      <th className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {myStudents.map((stu, idx) => {
+                      const isPresent = checkedValue.includes(stu._id);
+                      return (
+                        <tr key={stu._id} className={`hover:bg-slate-50 transition-colors ${isPresent ? 'bg-blue-50/30' : ''}`}>
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={isPresent}
+                              onChange={() => handleCheckboxChange(stu._id)}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                            />
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{idx + 1}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{stu.username}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            <div className="flex items-center gap-3">
+                              <img src={stu.avatar || `https://ui-avatars.com/api/?name=${stu.name}`} alt="" className="h-8 w-8 rounded-full bg-gray-100" />
+                              {stu.name}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-right">
+                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isPresent ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                               {isPresent ? 'Present' : 'Absent'}
+                             </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-        </div>
+
+          <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row items-center justify-end gap-3">
+             <button
+               type="submit"
+               disabled={loading || myStudents.length === 0}
+               className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-transparent text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 outline-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 min-w-[180px]"
+             >
+               {loading ? <Spinner height={20} width={20} color="#fff" /> : "Save Attendance"}
+             </button>
+          </div>
+
+        </form>
       </div>
     </div>
   );

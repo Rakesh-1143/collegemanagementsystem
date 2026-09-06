@@ -4,168 +4,138 @@ import Faculty from "../models/faculty.js";
 import Student from "../models/student.js";
 import Subject from "../models/subject.js";
 import Notice from "../models/notice.js";
-import jwt from "jsonwebtoken";
+import Branch from "../models/branch.js";
+import Course from "../models/course.js";
 import bcrypt from "bcryptjs";
+import {
+  createAuthToken,
+  sanitizeUser,
+  setAuthCookie,
+} from "../utils/auth.js";
+
+const USERNAME_BASE = {
+  admin: "ADM",
+  faculty: "FAC",
+  student: "STU",
+};
+
+// Generates usernames like ADM2024<deptCode><seq>.
+const buildUsername = (prefix, departmentCode, count) => {
+  let helper;
+  if (count < 10) {
+    helper = "00" + count.toString();
+  } else if (count < 100) {
+    helper = "0" + count.toString();
+  } else {
+    helper = count.toString();
+  }
+  return [prefix, new Date().getFullYear(), departmentCode, helper].join("");
+};
+
+// The date the user is created with (YYYY-MM-DD from the date input) is
+// reversed to DD-MM-YYYY and used as the initial password.
+const initialPasswordFromDob = (dob) => dob.split("-").reverse().join("-");
+
+// --- Helper for Admin Scoping ---
+const getAdminDepartmentId = async (req) => {
+  const admin = await Admin.findById(req.userId);
+  if (!admin) return null;
+  const department = await Department.findOne({ department: admin.department });
+  return department ? department._id : null;
+};
 
 export const adminLogin = async (req, res) => {
   const { username, password } = req.body;
-  const errors = { usernameError: String, passwordError: String };
   try {
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ usernameError: "Username and password are required" });
+    }
     const existingAdmin = await Admin.findOne({ username });
     if (!existingAdmin) {
-      errors.usernameError = "Admin doesn't exist.";
-      return res.status(404).json(errors);
+      return res.status(404).json({ usernameError: "Admin doesn't exist." });
     }
     const isPasswordCorrect = await bcrypt.compare(
       password,
       existingAdmin.password
     );
     if (!isPasswordCorrect) {
-      errors.passwordError = "Invalid Credentials";
-      return res.status(404).json(errors);
+      return res.status(404).json({ passwordError: "Invalid Credentials" });
     }
 
-    const token = jwt.sign(
-      {
-        email: existingAdmin.email,
-        id: existingAdmin._id,
-      },
-      "sEcReT",
-      { expiresIn: "1h" }
-    );
+    const token = createAuthToken(existingAdmin._id, existingAdmin.email, "admin");
+    setAuthCookie(res, token);
 
-    res.status(200).json({ result: existingAdmin, token: token });
+    res.status(200).json({ result: sanitizeUser(existingAdmin) });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const updatedPassword = async (req, res) => {
   try {
-    const { newPassword, confirmPassword, email } = req.body;
-    const errors = { mismatchError: String };
+    const { newPassword, confirmPassword } = req.body;
     if (newPassword !== confirmPassword) {
-      errors.mismatchError =
-        "Your password and confirmation password do not match";
-      return res.status(400).json(errors);
+      return res.status(400).json({
+        mismatchError: "Your password and confirmation password do not match",
+      });
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        passwordError: "Password must be at least 6 characters long",
+      });
     }
 
-    const admin = await Admin.findOne({ email });
-    let hashedPassword;
-    hashedPassword = await bcrypt.hash(newPassword, 10);
-    admin.password = hashedPassword;
-    await admin.save();
-    if (admin.passwordUpdated === false) {
-      admin.passwordUpdated = true;
-      await admin.save();
+    const admin = await Admin.findById(req.userId);
+    if (!admin) {
+      return res.status(404).json({ backendError: "Admin not found" });
     }
+    admin.password = await bcrypt.hash(newPassword, 10);
+    admin.passwordUpdated = true;
+    await admin.save();
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
-      response: admin,
+      response: sanitizeUser(admin),
     });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
+
 export const updateAdmin = async (req, res) => {
   try {
-    const { name, dob, department, contactNumber, avatar, email } = req.body;
-    const updatedAdmin = await Admin.findOne({ email });
-    if (name) {
-      updatedAdmin.name = name;
-      await updatedAdmin.save();
+    const { name, dob, department, contactNumber, avatar } = req.body;
+    const admin = await Admin.findById(req.userId);
+    if (!admin) {
+      return res.status(404).json({ backendError: "Admin not found" });
     }
-    if (dob) {
-      updatedAdmin.dob = dob;
-      await updatedAdmin.save();
-    }
-    if (department) {
-      updatedAdmin.department = department;
-      await updatedAdmin.save();
-    }
-    if (contactNumber) {
-      updatedAdmin.contactNumber = contactNumber;
-      await updatedAdmin.save();
-    }
-    if (avatar) {
-      updatedAdmin.avatar = avatar;
-      await updatedAdmin.save();
-    }
-    res.status(200).json(updatedAdmin);
+    if (name) admin.name = name;
+    if (dob) admin.dob = dob;
+    if (department) admin.department = department;
+    if (contactNumber) admin.contactNumber = contactNumber;
+    if (avatar) admin.avatar = avatar;
+    await admin.save();
+
+    res.status(200).json(sanitizeUser(admin));
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const addAdmin = async (req, res) => {
-  try {
-    const { name, dob, department, contactNumber, avatar, email, joiningYear } =
-      req.body;
-    const errors = { emailError: String };
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
-      errors.emailError = "Email already exists";
-      return res.status(400).json(errors);
-    }
-    const existingDepartment = await Department.findOne({ department });
-    let departmentHelper = existingDepartment.departmentCode;
-    const admins = await Admin.find({ department });
 
-    let helper;
-    if (admins.length < 10) {
-      helper = "00" + admins.length.toString();
-    } else if (admins.length < 100 && admins.length > 9) {
-      helper = "0" + admins.length.toString();
-    } else {
-      helper = admins.length.toString();
-    }
-    var date = new Date();
-    var components = ["ADM", date.getFullYear(), departmentHelper, helper];
-
-    var username = components.join("");
-    let hashedPassword;
-    const newDob = dob.split("-").reverse().join("-");
-
-    hashedPassword = await bcrypt.hash(newDob, 10);
-    var passwordUpdated = false;
-    const newAdmin = await new Admin({
-      name,
-      email,
-      password: hashedPassword,
-      joiningYear,
-      username,
-      department,
-      avatar,
-      contactNumber,
-      dob,
-      passwordUpdated,
-    });
-    await newAdmin.save();
-    return res.status(200).json({
-      success: true,
-      message: "Admin registerd successfully",
-      response: newAdmin,
-    });
-  } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
-  }
-};
 export const addDummyAdmin = async () => {
   const email = "dummy@gmail.com";
   const password = "123";
   const name = "dummy";
   const username = "ADMDUMMY";
-  let hashedPassword;
-  hashedPassword = await bcrypt.hash(password, 10);
-  var passwordUpdated = true;
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const dummyAdmin = await Admin.findOne({ email });
 
@@ -175,7 +145,7 @@ export const addDummyAdmin = async () => {
       email,
       password: hashedPassword,
       username,
-      passwordUpdated,
+      passwordUpdated: true,
     });
     console.log("Dummy user added.");
   } else {
@@ -186,12 +156,14 @@ export const addDummyAdmin = async () => {
 export const createNotice = async (req, res) => {
   try {
     const { from, content, topic, date, noticeFor } = req.body;
-
-    const errors = { noticeError: String };
-    const exisitingNotice = await Notice.findOne({ topic, content, date });
-    if (exisitingNotice) {
-      errors.noticeError = "Notice already created";
-      return res.status(400).json(errors);
+    if (!from || !content || !topic || !date || !noticeFor) {
+      return res.status(400).json({
+        noticeError: "Topic, content, date, from and noticeFor are required",
+      });
+    }
+    const existingNotice = await Notice.findOne({ topic, content, date });
+    if (existingNotice) {
+      return res.status(400).json({ noticeError: "Notice already created" });
     }
     const newNotice = await new Notice({
       from,
@@ -207,47 +179,12 @@ export const createNotice = async (req, res) => {
       response: newNotice,
     });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const addDepartment = async (req, res) => {
-  try {
-    const errors = { departmentError: String };
-    const { department } = req.body;
-    const existingDepartment = await Department.findOne({ department });
-    if (existingDepartment) {
-      errors.departmentError = "Department already added";
-      return res.status(400).json(errors);
-    }
-    const departments = await Department.find({});
-    let add = departments.length + 1;
-    let departmentCode;
-    if (add < 9) {
-      departmentCode = "0" + add.toString();
-    } else {
-      departmentCode = add.toString();
-    }
 
-    const newDepartment = await new Department({
-      department,
-      departmentCode,
-    });
-
-    await newDepartment.save();
-    return res.status(200).json({
-      success: true,
-      message: "Department added successfully",
-      response: newDepartment,
-    });
-  } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
-  }
-};
 
 export const addFaculty = async (req, res) => {
   try {
@@ -255,6 +192,9 @@ export const addFaculty = async (req, res) => {
       name,
       dob,
       department,
+      branch,
+      course,
+      subject,
       contactNumber,
       avatar,
       email,
@@ -262,33 +202,43 @@ export const addFaculty = async (req, res) => {
       gender,
       designation,
     } = req.body;
-    const errors = { emailError: String };
+    if (!name || !email || !dob || !department || !branch || !course || !subject || !designation) {
+      return res.status(400).json({
+        emailError:
+          "All academic assignment fields (Department, Branch, Course, Subject) and personal details are required",
+      });
+    }
     const existingFaculty = await Faculty.findOne({ email });
     if (existingFaculty) {
-      errors.emailError = "Email already exists";
-      return res.status(400).json(errors);
+      return res.status(400).json({ emailError: "Email already exists" });
     }
     const existingDepartment = await Department.findOne({ department });
-    let departmentHelper = existingDepartment.departmentCode;
+    if (!existingDepartment) {
+      return res
+        .status(400)
+        .json({ departmentError: "Department does not exist" });
+    }
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    if (adminDepartmentId && existingDepartment._id.toString() !== adminDepartmentId.toString()) {
+        return res.status(403).json({ backendError: "Unauthorized to add faculty to this department" });
+    }
+
+    const existingBranch = await Branch.findOne({ _id: branch, department: existingDepartment._id });
+    if (!existingBranch) return res.status(400).json({ backendError: "Invalid Branch for this Department" });
+
+    const existingCourse = await Course.findOne({ _id: course, branch });
+    if (!existingCourse) return res.status(400).json({ backendError: "Invalid Course for this Branch" });
+
+    const existingSubject = await Subject.findOne({ _id: subject, course });
+    if (!existingSubject) return res.status(400).json({ backendError: "Invalid Subject for this Course" });
 
     const faculties = await Faculty.find({ department });
-    let helper;
-    if (faculties.length < 10) {
-      helper = "00" + faculties.length.toString();
-    } else if (faculties.length < 100 && faculties.length > 9) {
-      helper = "0" + faculties.length.toString();
-    } else {
-      helper = faculties.length.toString();
-    }
-    var date = new Date();
-    var components = ["FAC", date.getFullYear(), departmentHelper, helper];
-
-    var username = components.join("");
-    let hashedPassword;
-    const newDob = dob.split("-").reverse().join("-");
-
-    hashedPassword = await bcrypt.hash(newDob, 10);
-    var passwordUpdated = false;
+    const username = buildUsername(
+      USERNAME_BASE.faculty,
+      existingDepartment.departmentCode,
+      faculties.length
+    );
+    const hashedPassword = await bcrypt.hash(initialPasswordFromDob(dob), 10);
 
     const newFaculty = await new Faculty({
       name,
@@ -297,72 +247,93 @@ export const addFaculty = async (req, res) => {
       joiningYear,
       username,
       department,
+      branch,
+      course,
+      subject,
       avatar,
       contactNumber,
       dob,
       gender,
       designation,
-      passwordUpdated,
+      passwordUpdated: false,
     });
     await newFaculty.save();
     return res.status(200).json({
       success: true,
-      message: "Faculty registerd successfully",
-      response: newFaculty,
+      message: "Faculty registered successfully",
+      response: sanitizeUser(newFaculty),
     });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const getFaculty = async (req, res) => {
   try {
     const { department } = req.body;
-    const errors = { noFacultyError: String };
-    const faculties = await Faculty.find({ department });
+    const query = department ? { department } : {};
+    const faculties = await Faculty.find(query)
+      .populate("branch course subject")
+      .select("-password");
     if (faculties.length === 0) {
-      errors.noFacultyError = "No Faculty Found";
-      return res.status(404).json(errors);
+      return res.status(404).json({ noFacultyError: "No Faculty Found" });
     }
     res.status(200).json({ result: faculties });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
+
 export const getNotice = async (req, res) => {
   try {
-    const errors = { noNoticeError: String };
     const notices = await Notice.find({});
     if (notices.length === 0) {
-      errors.noNoticeError = "No Notice Found";
-      return res.status(404).json(errors);
+      return res.status(404).json({ noNoticeError: "No Notice Found" });
     }
     res.status(200).json({ result: notices });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const addSubject = async (req, res) => {
   try {
-    const { totalLectures, department, subjectCode, subjectName, year } =
+    const { totalLectures, department, branch, course, subjectCode, subjectName, year } =
       req.body;
-    const errors = { subjectError: String };
+    if (!department || !branch || !course || !subjectCode || !subjectName || !year) {
+      return res.status(400).json({
+        subjectError:
+          "All fields including branch and course are required",
+      });
+    }
     const subject = await Subject.findOne({ subjectCode });
     if (subject) {
-      errors.subjectError = "Given Subject is already added";
-      return res.status(400).json(errors);
+      return res.status(400).json({
+        subjectError: "Given Subject is already added",
+      });
     }
+
+    const departmentObj = await Department.findOne({ department });
+    if (!departmentObj) return res.status(400).json({ backendError: "Department does not exist" });
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    if (adminDepartmentId && departmentObj._id.toString() !== adminDepartmentId.toString()) {
+        return res.status(403).json({ backendError: "Unauthorized to add subject to this department" });
+    }
+
+    const existingBranch = await Branch.findOne({ _id: branch, department: departmentObj._id });
+    if (!existingBranch) return res.status(400).json({ backendError: "Invalid Branch for this Department" });
+
+    const existingCourse = await Course.findOne({ _id: course, branch });
+    if (!existingCourse) return res.status(400).json({ backendError: "Invalid Course for this Branch" });
 
     const newSubject = await new Subject({
       totalLectures,
       department,
+      branch,
+      course,
       subjectCode,
       subjectName,
       year,
@@ -371,7 +342,7 @@ export const addSubject = async (req, res) => {
     await newSubject.save();
     const students = await Student.find({ department, year });
     if (students.length !== 0) {
-      for (var i = 0; i < students.length; i++) {
+      for (let i = 0; i < students.length; i++) {
         students[i].subjects.push(newSubject._id);
         await students[i].save();
       }
@@ -382,129 +353,148 @@ export const addSubject = async (req, res) => {
       response: newSubject,
     });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const getSubject = async (req, res) => {
   try {
-    const { department, year } = req.body;
+    const { department, year, branch, course } = req.body;
+    
+    // Optionally check if the requested department matches the admin's department
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    if (adminDepartmentId) {
+      const requestedDept = await Department.findOne({ department });
+      if (!requestedDept || requestedDept._id.toString() !== adminDepartmentId.toString()) {
+         return res.status(403).json({ backendError: "Unauthorized to view subjects for this department" });
+      }
+    }
 
-    if (!req.userId) return res.json({ message: "Unauthenticated" });
-    const errors = { noSubjectError: String };
+    const query = { department, year };
+    if (branch) query.branch = branch;
+    if (course) query.course = course;
 
-    const subjects = await Subject.find({ department, year });
+    const subjects = await Subject.find(query).populate("branch course");
     if (subjects.length === 0) {
-      errors.noSubjectError = "No Subject Found";
-      return res.status(404).json(errors);
+      return res.status(404).json({ noSubjectError: "No Subject Found" });
     }
     res.status(200).json({ result: subjects });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const getAdmin = async (req, res) => {
+export const updateSubject = async (req, res) => {
   try {
-    const { department } = req.body;
+    const { _id, subjectName, subjectCode, totalLectures, isActive, branch, course } = req.body;
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    if (!adminDepartmentId) return res.status(400).json({ backendError: "Admin department not found" });
 
-    const errors = { noAdminError: String };
-
-    const admins = await Admin.find({ department });
-    if (admins.length === 0) {
-      errors.noAdminError = "No Subject Found";
-      return res.status(404).json(errors);
+    const subject = await Subject.findById(_id);
+    if (!subject) return res.status(404).json({ backendError: "Subject not found" });
+    
+    const subjectDept = await Department.findOne({ department: subject.department });
+    if (!subjectDept || subjectDept._id.toString() !== adminDepartmentId.toString()) {
+        return res.status(403).json({ backendError: "Unauthorized to update subject in this department" });
     }
-    res.status(200).json({ result: admins });
-  } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+
+    if (subjectName) subject.subjectName = subjectName;
+    if (subjectCode) subject.subjectCode = subjectCode;
+    if (totalLectures) subject.totalLectures = totalLectures;
+    if (isActive !== undefined) subject.isActive = isActive;
+    
+    if (branch) {
+      const existingBranch = await Branch.findOne({ _id: branch, department: adminDepartmentId });
+      if (!existingBranch) return res.status(400).json({ backendError: "Invalid Branch" });
+      subject.branch = branch;
+    }
+    if (course) {
+      const existingCourse = await Course.findOne({ _id: course, branch: subject.branch });
+      if (!existingCourse) return res.status(400).json({ backendError: "Invalid Course" });
+      subject.course = course;
+    }
+
+    await subject.save();
+    res.status(200).json({ message: "Subject updated successfully", response: subject });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const deleteAdmin = async (req, res) => {
-  try {
-    const admins = req.body;
-    const errors = { noAdminError: String };
-    for (var i = 0; i < admins.length; i++) {
-      var admin = admins[i];
 
-      await Admin.findOneAndDelete({ _id: admin });
-    }
-    res.status(200).json({ message: "Admin Deleted" });
-  } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
-  }
-};
 export const deleteFaculty = async (req, res) => {
   try {
-    const faculties = req.body;
-    const errors = { noFacultyError: String };
-    for (var i = 0; i < faculties.length; i++) {
-      var faculty = faculties[i];
-
-      await Faculty.findOneAndDelete({ _id: faculty });
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+      return res.status(400).json({ noFacultyError: "No faculties provided" });
+    }
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    for (const facultyId of req.body) {
+      const faculty = await Faculty.findById(facultyId);
+      if (faculty) {
+        const dept = await Department.findOne({ department: faculty.department });
+        if (adminDepartmentId && dept && dept._id.toString() !== adminDepartmentId.toString()) {
+          return res.status(403).json({ backendError: "Unauthorized" });
+        }
+        await Faculty.findOneAndDelete({ _id: facultyId });
+      }
     }
     res.status(200).json({ message: "Faculty Deleted" });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
+
 export const deleteStudent = async (req, res) => {
   try {
-    const students = req.body;
-    const errors = { noStudentError: String };
-    for (var i = 0; i < students.length; i++) {
-      var student = students[i];
-
-      await Student.findOneAndDelete({ _id: student });
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+      return res.status(400).json({ noStudentError: "No students provided" });
+    }
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    for (const studentId of req.body) {
+      const student = await Student.findById(studentId);
+      if (student) {
+        const dept = await Department.findOne({ department: student.department });
+        if (adminDepartmentId && dept && dept._id.toString() !== adminDepartmentId.toString()) {
+          return res.status(403).json({ backendError: "Unauthorized" });
+        }
+        await Student.findOneAndDelete({ _id: studentId });
+      }
     }
     res.status(200).json({ message: "Student Deleted" });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
+
 export const deleteSubject = async (req, res) => {
   try {
-    const subjects = req.body;
-    const errors = { noSubjectError: String };
-    for (var i = 0; i < subjects.length; i++) {
-      var subject = subjects[i];
-
-      await Subject.findOneAndDelete({ _id: subject });
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+      return res.status(400).json({ noSubjectError: "No subjects provided" });
+    }
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    for (const subjectId of req.body) {
+      const subject = await Subject.findById(subjectId);
+      if (subject) {
+        const dept = await Department.findOne({ department: subject.department });
+        if (adminDepartmentId && dept && dept._id.toString() !== adminDepartmentId.toString()) {
+          return res.status(403).json({ backendError: "Unauthorized" });
+        }
+        await Subject.findOneAndDelete({ _id: subjectId });
+      }
     }
     res.status(200).json({ message: "Subject Deleted" });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const deleteDepartment = async (req, res) => {
-  try {
-    const { department } = req.body;
 
-    await Department.findOneAndDelete({ department });
-
-    res.status(200).json({ message: "Department Deleted" });
-  } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
-  }
-};
 
 export const addStudent = async (req, res) => {
   try {
@@ -523,34 +513,42 @@ export const addStudent = async (req, res) => {
       fatherContactNumber,
       motherContactNumber,
       year,
+      branch,
+      course,
     } = req.body;
-    const errors = { emailError: String };
+    if (!name || !email || !dob || !department || !section || !year || !branch || !course) {
+      return res.status(400).json({
+        emailError: "Name, email, DOB, department, branch, course, section and year are required",
+      });
+    }
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
-      errors.emailError = "Email already exists";
-      return res.status(400).json(errors);
+      return res.status(400).json({ emailError: "Email already exists" });
     }
     const existingDepartment = await Department.findOne({ department });
-    let departmentHelper = existingDepartment.departmentCode;
+    if (!existingDepartment) {
+      return res
+        .status(400)
+        .json({ departmentError: "Department does not exist" });
+    }
+    const adminDepartmentId = await getAdminDepartmentId(req);
+    if (adminDepartmentId && existingDepartment._id.toString() !== adminDepartmentId.toString()) {
+        return res.status(403).json({ backendError: "Unauthorized to add student to this department" });
+    }
+
+    const existingBranch = await Branch.findOne({ _id: branch, department: existingDepartment._id });
+    if (!existingBranch) return res.status(400).json({ backendError: "Invalid Branch for this Department" });
+
+    const existingCourse = await Course.findOne({ _id: course, branch });
+    if (!existingCourse) return res.status(400).json({ backendError: "Invalid Course for this Branch" });
 
     const students = await Student.find({ department });
-    let helper;
-    if (students.length < 10) {
-      helper = "00" + students.length.toString();
-    } else if (students.length < 100 && students.length > 9) {
-      helper = "0" + students.length.toString();
-    } else {
-      helper = students.length.toString();
-    }
-    var date = new Date();
-    var components = ["STU", date.getFullYear(), departmentHelper, helper];
-
-    var username = components.join("");
-    let hashedPassword;
-    const newDob = dob.split("-").reverse().join("-");
-
-    hashedPassword = await bcrypt.hash(newDob, 10);
-    var passwordUpdated = false;
+    const username = buildUsername(
+      USERNAME_BASE.student,
+      existingDepartment.departmentCode,
+      students.length
+    );
+    const hashedPassword = await bcrypt.hash(initialPasswordFromDob(dob), 10);
 
     const newStudent = await new Student({
       name,
@@ -569,85 +567,327 @@ export const addStudent = async (req, res) => {
       fatherContactNumber,
       motherContactNumber,
       year,
-      passwordUpdated,
+      branch,
+      course,
+      passwordUpdated: false,
     });
     await newStudent.save();
     const subjects = await Subject.find({ department, year });
     if (subjects.length !== 0) {
-      for (var i = 0; i < subjects.length; i++) {
+      for (let i = 0; i < subjects.length; i++) {
         newStudent.subjects.push(subjects[i]._id);
       }
+      await newStudent.save();
     }
-    await newStudent.save();
     return res.status(200).json({
       success: true,
-      message: "Student registerd successfully",
-      response: newStudent,
+      message: "Student registered successfully",
+      response: sanitizeUser(newStudent),
     });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const getStudent = async (req, res) => {
   try {
-    const { department, year, section } = req.body;
-    const errors = { noStudentError: String };
-    const students = await Student.find({ department, year });
+    const { department, year } = req.body;
+    const students = await Student.find({ department, year }).select("-password");
 
     if (students.length === 0) {
-      errors.noStudentError = "No Student Found";
-      return res.status(404).json(errors);
+      return res.status(404).json({ noStudentError: "No Student Found" });
     }
 
     res.status(200).json({ result: students });
   } catch (error) {
-    const errors = { backendError: String };
-    errors.backendError = error;
-    res.status(500).json(errors);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
+
 export const getAllStudent = async (req, res) => {
   try {
-    const students = await Student.find();
+    const students = await Student.find().select("-password");
     res.status(200).json(students);
   } catch (error) {
-    console.log("Backend Error", error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const getAllDepartment = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.userId);
+    if (!admin) return res.status(404).json({ backendError: "Admin not found" });
+    const department = await Department.findOne({ department: admin.department });
+    res.status(200).json(department ? [department] : []);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
 export const getAllFaculty = async (req, res) => {
   try {
-    const faculties = await Faculty.find();
+    const faculties = await Faculty.find().select("-password");
     res.status(200).json(faculties);
   } catch (error) {
-    console.log("Backend Error", error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };
 
-export const getAllAdmin = async (req, res) => {
-  try {
-    const admins = await Admin.find();
-    res.status(200).json(admins);
-  } catch (error) {
-    console.log("Backend Error", error);
-  }
-};
-export const getAllDepartment = async (req, res) => {
-  try {
-    const departments = await Department.find();
-    res.status(200).json(departments);
-  } catch (error) {
-    console.log("Backend Error", error);
-  }
-};
 export const getAllSubject = async (req, res) => {
   try {
     const subjects = await Subject.find();
     res.status(200).json(subjects);
   } catch (error) {
-    console.log("Backend Error", error);
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+// --- Helper for Branch & Course ---
+
+
+// --- Branch Management ---
+export const addBranch = async (req, res) => {
+  try {
+    const { branchName, branchCode, description, status } = req.body;
+    if (!branchName) {
+      return res.status(400).json({ branchError: "Branch name is required" });
+    }
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) {
+      return res.status(400).json({ backendError: "Admin department not found" });
+    }
+
+    const existingBranch = await Branch.findOne({ branchName, department: departmentId });
+    if (existingBranch) {
+      return res.status(400).json({ branchError: "Branch already exists in this department" });
+    }
+
+    const newBranch = new Branch({
+      branchName,
+      branchCode,
+      description,
+      department: departmentId,
+      isActive: status !== undefined ? status : true,
+    });
+    await newBranch.save();
+
+    res.status(200).json({ success: true, message: "Branch created successfully", response: newBranch });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const getBranches = async (req, res) => {
+  try {
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) {
+      return res.status(400).json({ backendError: "Admin department not found" });
+    }
+    const branches = await Branch.find({ department: departmentId }).populate("department");
+    res.status(200).json({ result: branches });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const deleteBranch = async (req, res) => {
+  try {
+    const { _id } = req.body;
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) return res.status(400).json({ backendError: "Admin department not found" });
+
+    const branch = await Branch.findOne({ _id, department: departmentId });
+    if (!branch) return res.status(404).json({ backendError: "Branch not found or unauthorized" });
+
+    const courses = await Course.find({ branch: _id });
+    if (courses.length > 0) {
+      return res.status(400).json({ backendError: "Cannot delete branch with existing courses. Deactivate it instead." });
+    }
+
+    await Branch.findByIdAndDelete(_id);
+    res.status(200).json({ message: "Branch deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const updateBranch = async (req, res) => {
+    try {
+        const { _id, branchName, branchCode, description, isActive } = req.body;
+        const departmentId = await getAdminDepartmentId(req);
+        if (!departmentId) return res.status(400).json({ backendError: "Admin department not found" });
+
+        const branch = await Branch.findOne({ _id, department: departmentId });
+        if (!branch) return res.status(404).json({ backendError: "Branch not found or unauthorized" });
+
+        if (branchName && branchName !== branch.branchName) {
+            const existing = await Branch.findOne({ branchName, department: departmentId });
+            if (existing) return res.status(400).json({ branchError: "Branch name already exists" });
+            branch.branchName = branchName;
+        }
+        if (branchCode !== undefined) branch.branchCode = branchCode;
+        if (description !== undefined) branch.description = description;
+        if (isActive !== undefined) branch.isActive = isActive;
+        
+        await branch.save();
+        res.status(200).json({ message: "Branch updated successfully", response: branch });
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ backendError: "Something went wrong" });
+    }
+};
+
+// --- Course Management ---
+export const addCourse = async (req, res) => {
+  try {
+    const { courseName, courseCode, branchId, courseType, duration, status } = req.body;
+    if (!courseName || !branchId) {
+      return res.status(400).json({ courseError: "Course name and branch are required" });
+    }
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) {
+      return res.status(400).json({ backendError: "Admin department not found" });
+    }
+
+    const branch = await Branch.findOne({ _id: branchId, department: departmentId });
+    if (!branch) {
+      return res.status(400).json({ backendError: "Branch not found or unauthorized" });
+    }
+
+    const existingCourse = await Course.findOne({ courseName, branch: branchId });
+    if (existingCourse) {
+      return res.status(400).json({ courseError: "Course already exists in this branch" });
+    }
+
+    const newCourse = new Course({
+      courseName,
+      courseCode,
+      branch: branchId,
+      department: departmentId,
+      courseType,
+      duration,
+      isActive: status !== undefined ? status : true,
+    });
+    await newCourse.save();
+
+    res.status(200).json({ success: true, message: "Course created successfully", response: newCourse });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const getCourses = async (req, res) => {
+  try {
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) {
+      return res.status(400).json({ backendError: "Admin department not found" });
+    }
+    const courses = await Course.find({ department: departmentId }).populate("branch department");
+    res.status(200).json({ result: courses });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const deleteCourse = async (req, res) => {
+  try {
+    const { _id } = req.body;
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) return res.status(400).json({ backendError: "Admin department not found" });
+
+    const course = await Course.findOne({ _id, department: departmentId });
+    if (!course) return res.status(404).json({ backendError: "Course not found or unauthorized" });
+
+    // Note: If subjects/students depend on this, ideally we shouldn't delete. For now just delete.
+    await Course.findByIdAndDelete(_id);
+    res.status(200).json({ message: "Course deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const updateCourse = async (req, res) => {
+    try {
+        const { _id, courseName, courseCode, courseType, duration, isActive } = req.body;
+        const departmentId = await getAdminDepartmentId(req);
+        if (!departmentId) return res.status(400).json({ backendError: "Admin department not found" });
+
+        const course = await Course.findOne({ _id, department: departmentId });
+        if (!course) return res.status(404).json({ backendError: "Course not found or unauthorized" });
+
+        if (courseName && courseName !== course.courseName) {
+            const existing = await Course.findOne({ courseName, branch: course.branch });
+            if (existing) return res.status(400).json({ courseError: "Course name already exists in this branch" });
+            course.courseName = courseName;
+        }
+        if (courseCode !== undefined) course.courseCode = courseCode;
+        if (courseType !== undefined) course.courseType = courseType;
+        if (duration !== undefined) course.duration = duration;
+        if (isActive !== undefined) course.isActive = isActive;
+        
+        await course.save();
+        res.status(200).json({ message: "Course updated successfully", response: course });
+    } catch(err) {
+        console.error(err);
+        res.status(500).json({ backendError: "Something went wrong" });
+    }
+};
+
+export const getSubjectsByCourse = async (req, res) => {
+  try {
+    const { course } = req.body;
+    if (!course) return res.status(400).json({ backendError: "Course is required" });
+    const subjects = await Subject.find({ course });
+    res.status(200).json({ result: subjects });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
+  }
+};
+
+export const editFaculty = async (req, res) => {
+  try {
+    const { _id, branch, course, subject, designation, contactNumber } = req.body;
+    const departmentId = await getAdminDepartmentId(req);
+    if (!departmentId) return res.status(400).json({ backendError: "Admin department not found" });
+
+    const faculty = await Faculty.findById(_id);
+    if (!faculty) return res.status(404).json({ backendError: "Faculty not found" });
+
+    if (branch) {
+      const existingBranch = await Branch.findOne({ _id: branch, department: departmentId });
+      if (!existingBranch) return res.status(400).json({ backendError: "Invalid Branch" });
+      faculty.branch = branch;
+    }
+    if (course) {
+      const existingCourse = await Course.findOne({ _id: course, branch: faculty.branch });
+      if (!existingCourse) return res.status(400).json({ backendError: "Invalid Course" });
+      faculty.course = course;
+    }
+    if (subject) {
+      const existingSubject = await Subject.findOne({ _id: subject, course: faculty.course });
+      if (!existingSubject) return res.status(400).json({ backendError: "Invalid Subject" });
+      faculty.subject = subject;
+    }
+    if (designation) faculty.designation = designation;
+    if (contactNumber) faculty.contactNumber = contactNumber;
+
+    await faculty.save();
+    res.status(200).json({ message: "Faculty updated successfully", response: faculty });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ backendError: "Something went wrong" });
   }
 };

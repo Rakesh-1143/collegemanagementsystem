@@ -5,10 +5,12 @@ import {
   UPDATE_PASSWORD,
   TEST_RESULT,
   ATTENDANCE,
+  GET_ME,
 } from "../actionTypes";
 
 const initialState = {
   authData: null,
+  sessionRestored: false,
   updatedPassword: false,
   updatedStudent: false,
   testAdded: false,
@@ -22,11 +24,18 @@ const initialState = {
 const studentReducer = (state = initialState, action) => {
   switch (action.type) {
     case STUDENT_LOGIN:
-      localStorage.setItem("user", JSON.stringify({ ...action?.data }));
-      return { ...state, authData: action?.data };
+      return { ...state, authData: action?.data, sessionRestored: true };
+    case GET_ME:
+      return {
+        ...state,
+        sessionRestored: true,
+        authData:
+          action?.payload?.role === "student"
+            ? { result: action.payload.result }
+            : state.authData,
+      };
     case LOGOUT:
-      localStorage.clear();
-      return { ...state, authData: null };
+      return { ...state, authData: null, sessionRestored: true };
     case UPDATE_PASSWORD:
       return {
         ...state,

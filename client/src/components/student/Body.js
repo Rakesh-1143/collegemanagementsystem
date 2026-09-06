@@ -1,116 +1,102 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import Calendar from "react-calendar";
-import EngineeringIcon from "@mui/icons-material/Engineering";
-import BoyIcon from "@mui/icons-material/Boy";
-import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import SchoolIcon from "@mui/icons-material/School";
+import CampaignIcon from "@mui/icons-material/Campaign";
 import "react-calendar/dist/Calendar.css";
-import ShowNotice from "../notices/ShowNotice";
 import { useSelector } from "react-redux";
-import ReplyIcon from "@mui/icons-material/Reply";
 import Notice from "../notices/Notice";
+import ShowNotice from "../notices/ShowNotice";
+import PageHeader from "../common/PageHeader";
+import StatCard from "../common/StatCard";
+import EmptyState from "../common/EmptyState";
+
 const Body = () => {
-  const [open, setOpen] = useState(false);
-  const [openNotice, setOpenNotice] = useState({});
+  const [openNotice, setOpenNotice] = useState(null);
   const notices = useSelector((state) => state.admin.notices.result);
   const testResult = useSelector((state) => state.student.testResult.result);
   const attendance = useSelector((state) => state.student.attendance.result);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.student.authData);
   const subjects = useSelector((state) => state.admin.subjects.result);
-  var totalAttendance = 0;
-  console.log(attendance);
 
+  let totalAttendance = 0;
   attendance?.map((att) => (totalAttendance += att.attended));
-
-  const [value, onChange] = useState(new Date());
+  const name = user?.result?.name || "Student";
 
   return (
-    <div className="flex-[0.8] mt-3">
-      <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <HomeIcon />
-          <h1>Dashboard</h1>
+    <div className="w-full space-y-6">
+      <PageHeader
+        icon={HomeIcon}
+        title="Dashboard"
+        subtitle={`Welcome back, ${name}`}
+      />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+        <StatCard
+          icon={MenuBookIcon}
+          label="Subjects"
+          value={subjects?.length}
+          color="violet"
+        />
+        <StatCard
+          icon={FactCheckIcon}
+          label="Tests Taken"
+          value={testResult?.length}
+          color="blue"
+        />
+        <StatCard
+          icon={EventAvailableIcon}
+          label="Classes Attended"
+          value={totalAttendance}
+          color="green"
+        />
+        <StatCard
+          icon={SchoolIcon}
+          label="Year"
+          value={user?.result?.year}
+          color="orange"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+          <Calendar className="!w-full !border-0" />
         </div>
-        <div className="flex flex-col mr-5 space-y-4 overflow-y-auto">
-          <div className="bg-white h-[8rem] rounded-xl shadow-lg grid grid-cols-4 justify-between px-8 items-center space-x-4">
-            <div className="flex items-center space-x-4 border-r-2">
-              <EngineeringIcon
-                className="rounded-full py-2 bg-orange-300"
-                sx={{ fontSize: 40 }}
-              />
-              <div className="flex flex-col">
-                <h1>Subjects</h1>
-                <h2 className="text-2xl font-bold">{subjects?.length}</h2>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 border-r-2">
-              <BoyIcon
-                className="rounded-full py-2 bg-orange-300"
-                sx={{ fontSize: 40 }}
-              />
-              <div className="flex flex-col">
-                <h1>Test</h1>
-                <h2 className="text-2xl font-bold">{testResult?.length}</h2>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 border-r-2">
-              <SupervisorAccountIcon
-                className="rounded-full py-2 bg-orange-300"
-                sx={{ fontSize: 40 }}
-              />
-              <div className="flex flex-col">
-                <h1>Attendance</h1>
-                <h2 className="text-2xl font-bold">{totalAttendance}</h2>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 ">
-              <MenuBookIcon
-                className="rounded-full py-2 bg-orange-300"
-                sx={{ fontSize: 40 }}
-              />
-              <div className="flex flex-col">
-                <h1>Year</h1>
-                <h2 className="text-2xl font-bold">{user.result.year}</h2>
-              </div>
-            </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 xl:col-span-2">
+          <div className="mb-4 flex items-center gap-2">
+            <CampaignIcon className="text-violet-600" />
+            <h2 className="text-lg font-bold text-slate-800">Notices</h2>
           </div>
-          <div className="flex space-x-4">
-            <div className="flex flex-col space-y-4 w-2/6">
-              <div className="bg-white h-[17rem] rounded-xl shadow-lg">
-                <Calendar onChange={onChange} value={value} />
-              </div>
+          {!openNotice ? (
+            <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-1">
+              {notices?.length ? (
+                notices.map((notice, idx) => (
+                  <div key={idx} onClick={() => setOpenNotice(notice)}>
+                    <Notice idx={idx} notice={notice} notFor="faculty" />
+                  </div>
+                ))
+              ) : (
+                <EmptyState
+                  title="No notices yet"
+                  hint="New notices published by the admin will appear here."
+                />
+              )}
             </div>
-            <div className="bg-white h-[17rem] w-full rounded-xl shadow-lg flex flex-col  pt-3">
-              <div className="flex px-3">
-                {open && (
-                  <ReplyIcon
-                    onClick={() => setOpen(false)}
-                    className="cursor-pointer"
-                  />
-                )}
-                <h1 className="font-bold text-xl w-full text-center">
-                  Notices
-                </h1>
-              </div>
-              <div className="mx-5 mt-5 space-y-3 overflow-y-auto h-[12rem]">
-                {!open ? (
-                  notices?.map((notice, idx) => (
-                    <div
-                      onClick={() => {
-                        setOpen(true);
-                        setOpenNotice(notice);
-                      }}
-                      className="">
-                      <Notice idx={idx} notice={notice} notFor="faculty" />
-                    </div>
-                  ))
-                ) : (
-                  <ShowNotice notice={openNotice} />
-                )}
-              </div>
+          ) : (
+            <div>
+              <button
+                type="button"
+                onClick={() => setOpenNotice(null)}
+                className="mb-3 text-sm font-semibold text-violet-600 hover:text-violet-800">
+                ← Back to all notices
+              </button>
+              <ShowNotice notice={openNotice} />
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -10,6 +10,14 @@ const departmentSchema = mongoose.Schema({
     required: true,
     unique: true,
   },
+  admin: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "admin",
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 export default mongoose.model("department", departmentSchema);

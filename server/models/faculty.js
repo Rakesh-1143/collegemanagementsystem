@@ -30,6 +30,18 @@ const facultySchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  branch: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "branch",
+  },
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "course",
+  },
+  subject: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "subject",
+  },
   contactNumber: {
     type: Number,
   },

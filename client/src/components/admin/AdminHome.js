@@ -3,12 +3,10 @@ import { useDispatch } from "react-redux";
 import {
   getAllStudent,
   getAllFaculty,
-  getAllAdmin,
-  getAllDepartment,
   getNotice,
 } from "../../redux/actions/adminActions";
+import PageLayout from "../PageLayout";
 import Body from "./Body";
-import Header from "./Header";
 import Sidebar from "./Sidebar";
 
 const AdminHome = () => {
@@ -16,21 +14,13 @@ const AdminHome = () => {
   useEffect(() => {
     dispatch(getAllStudent());
     dispatch(getAllFaculty());
-    dispatch(getAllAdmin());
-    dispatch(getAllDepartment());
     dispatch(getNotice());
   }, [dispatch]);
   return (
-    <div className="bg-[#d6d9e0] h-screen flex items-center justify-center">
-      <div className="flex flex-col  bg-[#f4f6fa] h-5/6 w-[95%] rounded-2xl shadow-2xl space-y-6 overflow-y-hidden">
-        <Header />
-        <div className="flex flex-[0.95]">
-          <Sidebar />
-          <Body />
-        </div>
-      </div>
-    </div>
+    <PageLayout role="admin" sidebar={<Sidebar />}>
+      <Body />
+    </PageLayout>
   );
 };
 
-export default AdminHome;
+export default AdminHome;

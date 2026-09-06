@@ -1,16 +1,14 @@
 import axios from "axios";
 
-// const API = axios.create({ baseURL: process.env.REACT_APP_SERVER_URL });
-const API = axios.create({ baseURL: "http://localhost:5001/" });
-
-API.interceptors.request.use((req) => {
-  if (localStorage.getItem("user")) {
-    req.headers.Authorization = `Bearer ${
-      JSON.parse(localStorage.getItem("user")).token
-    }`;
-  }
-  return req;
+// Base URL is configurable via REACT_APP_SERVER_URL (see client/.env.example).
+const API = axios.create({
+  baseURL: process.env.REACT_APP_SERVER_URL || "http://localhost:5001/",
+  withCredentials: true, // send/receive the httpOnly auth cookie
 });
+
+// Session (cookie based)
+export const fetchMe = () => API.get("/api/me");
+export const logout = () => API.post("/api/logout");
 
 // Admin
 
@@ -21,33 +19,25 @@ export const adminUpdatePassword = (updatedPassword) =>
 
 export const getAllStudent = () => API.get("/api/admin/getallstudent");
 
-export const getAllFaculty = () => API.get("/api/admin/getallfaculty");
-
-export const getAllAdmin = () => API.get("/api/admin/getalladmin");
-
 export const getAllDepartment = () => API.get("/api/admin/getalldepartment");
+
+export const getAllFaculty = () => API.get("/api/admin/getallfaculty");
 export const getAllSubject = () => API.get("/api/admin/getallsubject");
 
 export const updateAdmin = (updatedAdmin) =>
   API.post("/api/admin/updateprofile", updatedAdmin);
 
-export const addAdmin = (admin) => API.post("/api/admin/addadmin", admin);
 export const createNotice = (notice) =>
   API.post("/api/admin/createnotice", notice);
-export const deleteAdmin = (data) => API.post("/api/admin/deleteadmin", data);
+
 export const deleteFaculty = (data) =>
   API.post("/api/admin/deletefaculty", data);
 export const deleteStudent = (data) =>
   API.post("/api/admin/deletestudent", data);
 export const deleteSubject = (data) =>
   API.post("/api/admin/deletesubject", data);
-export const deleteDepartment = (data) =>
-  API.post("/api/admin/deletedepartment", data);
 
-export const getAdmin = (admin) => API.post("/api/admin/getadmin", admin);
 
-export const addDepartment = (department) =>
-  API.post("/api/admin/adddepartment", department);
 
 export const addFaculty = (faculty) =>
   API.post("/api/admin/addfaculty", faculty);
@@ -55,17 +45,43 @@ export const addFaculty = (faculty) =>
 export const getFaculty = (department) =>
   API.post("/api/admin/getfaculty", department);
 
-export const addSubject = (subject) =>
-  API.post("/api/admin/addsubject", subject);
-export const getSubject = (subject) =>
-  API.post("/api/admin/getsubject", subject);
-
-export const addStudent = (student) =>
-  API.post("/api/admin/addstudent", student);
+export const addSubject = (addSubject) => API.post("/api/admin/addsubject", addSubject);
+export const getSubject = (subject) => API.post("/api/admin/getsubject", subject);
+export const updateSubject = (subject) => API.post("/api/admin/updatesubject", subject);
+export const getSubjectsByCourse = (data) => API.post("/api/admin/getsubjectsbycourse", data);
+export const editFaculty = (faculty) => API.post("/api/admin/editfaculty", faculty);
+export const addStudent = (addStudent) => API.post("/api/admin/addstudent", addStudent);
 
 export const getStudent = (student) =>
   API.post("/api/admin/getstudent", student);
 export const getNotice = (notice) => API.post("/api/admin/getnotice", notice);
+
+export const addBranch = (branch) => API.post("/api/admin/addbranch", branch);
+export const getBranches = () => API.get("/api/admin/getbranches");
+export const updateBranch = (branch) => API.post("/api/admin/updatebranch", branch);
+export const deleteBranch = (branchId) => API.post("/api/admin/deletebranch", { _id: branchId });
+
+export const addCourse = (course) => API.post("/api/admin/addcourse", course);
+export const getCourses = () => API.get("/api/admin/getcourses");
+export const updateCourse = (course) => API.post("/api/admin/updatecourse", course);
+export const deleteCourse = (courseId) => API.post("/api/admin/deletecourse", { _id: courseId });
+
+// Super Admin
+export const superAdminSignIn = (formData) => API.post("/api/superadmin/login", formData);
+export const superAdminUpdatePassword = (updatedPassword) => API.post("/api/superadmin/updatepassword", updatedPassword);
+export const updateSuperAdmin = (updatedSuperAdmin) => API.post("/api/superadmin/updateprofile", updatedSuperAdmin);
+export const addAdmin = (admin) => API.post("/api/superadmin/addadmin", admin);
+export const deleteAdmin = (data) => API.post("/api/superadmin/deleteadmin", data);
+export const getAdmin = (admin) => API.post("/api/superadmin/getadmin", admin);
+export const updateAdminStatus = (data) => API.post("/api/superadmin/updateadminstatus", data);
+export const editAdmin = (data) => API.post("/api/superadmin/editadmin", data);
+
+export const addDepartment = (department) => API.post("/api/superadmin/adddepartment", department);
+export const deleteDepartment = (data) => API.post("/api/superadmin/deletedepartment", data);
+export const editDepartment = (data) => API.post("/api/superadmin/editdepartment", data);
+export const updateDepartmentStatus = (data) => API.post("/api/superadmin/updatedepartmentstatus", data);
+export const getUnassignedAdmins = () => API.get("/api/superadmin/getunassignedadmins");
+export const getSuperAdminAllDepartment = () => API.get("/api/superadmin/getalldepartment");
 
 // Faculty
 
@@ -85,6 +101,8 @@ export const getMarksStudent = (student) =>
 export const uploadMarks = (data) => API.post("/api/faculty/uploadmarks", data);
 export const markAttendance = (data) =>
   API.post("/api/faculty/markattendance", data);
+export const getMySubjects = () => API.get("/api/faculty/mysubjects");
+export const getMyStudents = () => API.get("/api/faculty/mystudents");
 
 // Student
 
@@ -99,4 +117,4 @@ export const updateStudent = (updatedStudent) =>
 export const getTestResult = (testResult) =>
   API.post("/api/student/testresult", testResult);
 export const getAttendance = (attendance) =>
-  API.post("/api/student/attendance", attendance);
+  API.post("/api/student/attendance", attendance);

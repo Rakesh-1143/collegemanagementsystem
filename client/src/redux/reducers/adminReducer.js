@@ -6,6 +6,7 @@ import {
   ADMIN_LOGIN,
   GET_FACULTY,
   GET_SUBJECT,
+  GET_ME,
   LOGOUT,
   UPDATE_ADMIN,
   GET_STUDENT,
@@ -24,10 +25,21 @@ import {
   DELETE_SUBJECT,
   CREATE_NOTICE,
   GET_NOTICE,
+  ADD_BRANCH,
+  GET_BRANCHES,
+  UPDATE_BRANCH,
+  DELETE_BRANCH,
+  ADD_COURSE,
+  GET_COURSES,
+  UPDATE_COURSE,
+  DELETE_COURSE,
+  UPDATE_FACULTY,
+  GET_SUBJECTS_BY_COURSE,
 } from "../actionTypes";
 
 const initialState = {
   authData: null,
+  sessionRestored: false,
   updatedPassword: false,
   updatedAdmin: false,
   adminAdded: false,
@@ -51,16 +63,34 @@ const initialState = {
   studentDeleted: false,
   subjectDeleted: false,
   noticeCreated: false,
+  branches: [],
+  courses: [],
+  branchAdded: false,
+  branchDeleted: false,
+  branchUpdated: false,
+  courseAdded: false,
+  courseDeleted: false,
+  courseUpdated: false,
+  facultyUpdated: false,
+  subjectsByCourse: [],
+  subjectUpdated: false,
 };
 
 const adminReducer = (state = initialState, action) => {
   switch (action.type) {
     case ADMIN_LOGIN:
-      localStorage.setItem("user", JSON.stringify({ ...action?.data }));
-      return { ...state, authData: action?.data };
+      return { ...state, authData: action?.data, sessionRestored: true };
+    case GET_ME:
+      return {
+        ...state,
+        sessionRestored: true,
+        authData:
+          action?.payload?.role === "admin"
+            ? { result: action.payload.result }
+            : state.authData,
+      };
     case LOGOUT:
-      localStorage.clear();
-      return { ...state, authData: null };
+      return { ...state, authData: null, sessionRestored: true };
     case UPDATE_PASSWORD:
       return {
         ...state,
@@ -141,6 +171,11 @@ const adminReducer = (state = initialState, action) => {
         ...state,
         allAdmin: action.payload,
       };
+    case GET_ALL_STUDENT:
+      return {
+        ...state,
+        allStudent: action.payload,
+      };
     case GET_ALL_DEPARTMENT:
       return {
         ...state,
@@ -171,11 +206,28 @@ const adminReducer = (state = initialState, action) => {
         ...state,
         students: action.payload,
       };
-    case GET_ALL_STUDENT:
-      return {
-        ...state,
-        allStudent: action.payload,
-      };
+    case ADD_BRANCH:
+      return { ...state, branchAdded: action.payload };
+    case GET_BRANCHES:
+      return { ...state, branches: action.payload };
+    case UPDATE_BRANCH:
+      return { ...state, branchUpdated: action.payload };
+    case DELETE_BRANCH:
+      return { ...state, branchDeleted: action.payload };
+    case ADD_COURSE:
+      return { ...state, courseAdded: action.payload };
+    case GET_COURSES:
+      return { ...state, courses: action.payload };
+    case UPDATE_COURSE:
+      return { ...state, courseUpdated: action.payload };
+    case DELETE_COURSE:
+      return { ...state, courseDeleted: action.payload };
+    case UPDATE_FACULTY:
+      return { ...state, facultyUpdated: action.payload };
+    case GET_SUBJECTS_BY_COURSE:
+      return { ...state, subjectsByCourse: action.payload };
+    case "UPDATE_SUBJECT":
+      return { ...state, subjectUpdated: action.payload };
     default:
       return state;
   }

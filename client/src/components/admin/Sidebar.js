@@ -1,196 +1,71 @@
-import React, { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+import CampaignIcon from "@mui/icons-material/Campaign";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import AddIcon from "@mui/icons-material/Add";
 import BoyIcon from "@mui/icons-material/Boy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
-import { useDispatch } from "react-redux";
-import decode from "jwt-decode";
-import { setRef } from "@mui/material";
-const isNotActiveStyle =
-  "flex items-center px-5 gap-3 text-gray-500 hover:text-black transition-all duration-200 ease-in-out capitalize hover:bg-gray-200 py-2 my-1";
-const isActiveStyle =
-  "flex items-center px-5 gap-3 text-blue-600 transition-all duration-200 ease-in-out capitalize hover:bg-gray-200 py-2 my-1";
+import { useLocation } from "react-router-dom";
+import { SidebarGroup, SidebarLink, SidebarSubGroup } from "../common/SidebarNav";
 
 const Sidebar = () => {
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const logout = () => {
-    alert("OOPS! Your session expired. Please Login again");
-    dispatch({ type: "LOGOUT" });
-    navigate("/login/adminLogin");
+  const location = useLocation();
+
+  const getInitialGroup = () => {
+    const path = location.pathname.toLowerCase();
+    if (path.includes("createnotice")) return "Communication";
+    if (path.includes("branch") || path.includes("course")) return "Curriculum";
+    if (path.includes("faculty") || path.includes("student") || path.includes("subject")) return "Academics";
+    return "Overview";
   };
-  useEffect(() => {
-    const token = user?.token;
-    if (token) {
-      const decodedToken = decode(token);
-      if (decodedToken.exp * 1000 < new Date().getTime()) logout();
-    }
 
-    setUser(JSON.parse(localStorage.getItem("admin")));
-  }, [navigate]);
-  // useEffect(() => {
-  //   if (rf === "home") {
-  //     elRef[0].current.scrollIntoView({
-  //       behavior: "smooth",
-  //       block: "end",
-  //       inline: "nearest",
-  //     });
-  //   }
-  // }, []);
+  const [openGroup, setOpenGroup] = useState(getInitialGroup());
+
+  const handleToggle = (title) => {
+    setOpenGroup(openGroup === title ? null : title);
+  };
+
+  const path = location.pathname.toLowerCase();
+
   return (
-    <div className="flex-[0.2]">
-      <div className="space-y-8 overflow-y-scroll scrollbar-thin scrollbar-track-white scrollbar-thumb-gray-300 h-[33rem]">
-        <div className="">
-          <NavLink
-            to="/admin/home"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <HomeIcon className="" />
-            <h1 className="font-normal">Dashboard</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/profile"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AssignmentIndIcon className="" />
-            <h1 className="font-normal">Profile</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/createNotice"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Create Notice</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/addadmin"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Add Admin</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/deleteadmin"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <DeleteIcon className="" />
-            <h1 className="font-normal">Delete Admin</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/adddepartment"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Add Department</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/deletedepartment"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <DeleteIcon className="" />
-            <h1 className="font-normal">Delete Department</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/allfaculty"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <EngineeringIcon className="" />
-            <h1 className="font-normal">Our Faculty</h1>
-          </NavLink>
+    <div className="w-full space-y-6 py-2">
+      <SidebarGroup title="Overview" isOpen={openGroup === "Overview"} onToggle={() => handleToggle("Overview")}>
+        <SidebarLink to="/admin/home" icon={HomeIcon} label="Dashboard" />
+        <SidebarLink to="/admin/profile" icon={AssignmentIndIcon} label="Profile" />
+      </SidebarGroup>
 
-          <NavLink
-            to="/admin/addfaculty"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Add Faculty</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/deletefaculty"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <DeleteIcon className="" />
-            <h1 className="font-normal">Delete Faculty</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/allstudent"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <BoyIcon className="" />
-            <h1 className="font-normal">Our Students</h1>
-          </NavLink>
+      <SidebarGroup title="Communication" isOpen={openGroup === "Communication"} onToggle={() => handleToggle("Communication")}>
+        <SidebarLink to="/admin/createnotice" icon={CampaignIcon} label="Create Notice" />
+      </SidebarGroup>
 
-          <NavLink
-            to="/admin/addstudent"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Add Students</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/deletestudent"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <DeleteIcon className="" />
-            <h1 className="font-normal">Delete Student</h1>
-          </NavLink>
-        </div>
-        <div className="">
-          <NavLink
-            to="/admin/allsubject"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <MenuBookIcon className="" />
-            <h1 className="font-normal">Subjects</h1>
-          </NavLink>
+      <SidebarGroup title="Curriculum" isOpen={openGroup === "Curriculum"} onToggle={() => handleToggle("Curriculum")}>
+        <SidebarLink to="/admin/allbranch" icon={MenuBookIcon} label="View All Branches" />
+        <SidebarLink to="/admin/addbranch" icon={AddIcon} label="Add Branch" />
+        <SidebarLink to="/admin/allcourse" icon={MenuBookIcon} label="View All Courses" />
+        <SidebarLink to="/admin/addcourse" icon={AddIcon} label="Add Course" />
+      </SidebarGroup>
 
-          <NavLink
-            to="/admin/addsubject"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <AddIcon className="" />
-            <h1 className="font-normal">Add Subject</h1>
-          </NavLink>
-          <NavLink
-            to="/admin/deletesubject"
-            className={({ isActive }) =>
-              isActive ? isActiveStyle : isNotActiveStyle
-            }>
-            <DeleteIcon className="" />
-            <h1 className="font-normal">Delete Subject</h1>
-          </NavLink>
-        </div>
-      </div>
+      <SidebarGroup title="Academics" isOpen={openGroup === "Academics"} onToggle={() => handleToggle("Academics")}>
+        <SidebarSubGroup title="Faculty" defaultOpen={path.includes("faculty")}>
+          <SidebarLink to="/admin/allfaculty" icon={EngineeringIcon} label="Our Faculty" />
+          <SidebarLink to="/admin/addfaculty" icon={AddIcon} label="Add Faculty" />
+          <SidebarLink to="/admin/deletefaculty" icon={DeleteIcon} label="Remove Faculty" />
+        </SidebarSubGroup>
+        
+        <SidebarSubGroup title="Student" defaultOpen={path.includes("student")}>
+          <SidebarLink to="/admin/allstudent" icon={BoyIcon} label="Our Students" />
+          <SidebarLink to="/admin/addstudent" icon={AddIcon} label="Add Student" />
+          <SidebarLink to="/admin/deletestudent" icon={DeleteIcon} label="Remove Student" />
+        </SidebarSubGroup>
+        
+        <SidebarSubGroup title="Subjects" defaultOpen={path.includes("subject")}>
+          <SidebarLink to="/admin/allsubject" icon={MenuBookIcon} label="Subjects" />
+          <SidebarLink to="/admin/addsubject" icon={AddIcon} label="Add Subject" />
+          <SidebarLink to="/admin/deletesubject" icon={DeleteIcon} label="Remove Subject" />
+        </SidebarSubGroup>
+      </SidebarGroup>
     </div>
   );
 };

@@ -1,42 +1,30 @@
 import React, { useEffect, useState } from "react";
-import AddIcon from "@mui/icons-material/Add";
+import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import { useDispatch, useSelector } from "react-redux";
 import { createTest } from "../../../redux/actions/facultyActions";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
 import Spinner from "../../../utils/Spinner";
 import { ADD_TEST, SET_ERRORS } from "../../../redux/actionTypes";
-import * as classes from "../../../utils/styles";
+import PageHeader from "../../common/PageHeader";
+
 const Body = () => {
   const dispatch = useDispatch();
-  const store = useSelector((state) => state);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const errors = useSelector((state) => state.errors);
+  const testAdded = useSelector((state) => state.faculty.testAdded);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const [value, setValue] = useState({
-    subjectCode: "",
-    section: "",
-    year: "",
     test: "",
     totalMarks: "",
     date: "",
-    department: user.result.department,
   });
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
-      setValue({
-        subjectCode: "",
-        section: "",
-        year: "",
-        test: "",
-        totalMarks: "",
-        date: "",
-        department: user.result.department,
-      });
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
+      setLoading(false);
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -45,191 +33,110 @@ const Body = () => {
     dispatch(createTest(value));
   };
 
-  useEffect(() => {
-    if (store.errors || store.faculty.testAdded) {
-      setLoading(false);
-      if (store.faculty.testAdded) {
-        setValue({
-          subjectCode: "",
-          section: "",
-          year: "",
-          test: "",
-          totalMarks: "",
-          date: "",
-          department: user.result.department,
-        });
+  const handleClear = () => {
+    setValue({
+      test: "",
+      totalMarks: "",
+      date: "",
+    });
+    setError({});
+  };
 
+  useEffect(() => {
+    if (errors || testAdded) {
+      setLoading(false);
+      if (testAdded) {
+        handleClear();
         dispatch({ type: SET_ERRORS, payload: {} });
         dispatch({ type: ADD_TEST, payload: false });
       }
     } else {
       setLoading(true);
     }
-  }, [store.errors, store.faculty.testAdded]);
+  }, [errors, testAdded, dispatch]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
-  }, []);
+  }, [dispatch]);
 
   return (
-    <div className="flex-[0.8] mt-3">
-      <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <AddIcon />
-          <h1>Create Test</h1>
-        </div>
-        <div className=" mr-10 bg-white flex flex-col rounded-xl ">
-          <form className={classes.adminForm0} onSubmit={handleSubmit}>
-            <div className={classes.adminForm1}>
-              <div className={classes.adminForm2l}>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Test Name :</h1>
+    <div className="w-full space-y-6 pb-10">
+      <PageHeader
+        icon={NoteAddIcon}
+        title="Create Test"
+        subtitle="Set up a new test for your assigned subject."
+      />
 
-                  <input
-                    placeholder="Test Name"
-                    required
-                    className={classes.adminInput}
-                    type="text"
-                    value={value.test}
-                    onChange={(e) =>
-                      setValue({ ...value, test: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Subject Code :</h1>
-
-                  <input
-                    required
-                    placeholder="Subject Code"
-                    className={classes.adminInput}
-                    type="text"
-                    value={value.subjectCode}
-                    onChange={(e) =>
-                      setValue({ ...value, subjectCode: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Department :</h1>
-
-                  <input
-                    required
-                    placeholder={user.result.department}
-                    disabled
-                    className={classes.adminInput}
-                    type="text"
-                    value={user.result.department}
-                  />
-                </div>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Year :</h1>
-                  <Select
-                    required
-                    displayEmpty
-                    sx={{ height: 36 }}
-                    inputProps={{ "aria-label": "Without label" }}
-                    value={value.year}
-                    onChange={(e) =>
-                      setValue({ ...value, year: e.target.value })
-                    }>
-                    <MenuItem value="">None</MenuItem>
-                    <MenuItem value="1">1</MenuItem>
-                    <MenuItem value="2">2</MenuItem>
-                    <MenuItem value="3">3</MenuItem>
-                    <MenuItem value="4">4</MenuItem>
-                  </Select>
-                </div>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
+          
+          <div className="p-6 sm:p-8 space-y-6">
+            <h2 className="text-lg font-semibold text-gray-900">Test Details</h2>
+            
+            {(error.testError || error.backendError) && (
+              <div className="rounded-xl border border-red-100 bg-red-50 p-4 mb-4 text-sm font-medium text-red-700">
+                {error.testError || error.backendError}
               </div>
-              <div className={classes.adminForm2r}>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Total Marks :</h1>
+            )}
 
-                  <input
-                    required
-                    placeholder="Total Marks"
-                    className={classes.adminInput}
-                    type="number"
-                    value={value.totalMarks}
-                    onChange={(e) =>
-                      setValue({ ...value, totalMarks: e.target.value })
-                    }
-                  />
-                </div>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Date :</h1>
-
-                  <input
-                    required
-                    className={classes.adminInput}
-                    type="date"
-                    value={value.date}
-                    onChange={(e) =>
-                      setValue({ ...value, date: e.target.value })
-                    }
-                  />
-                </div>
-                <div className={classes.adminForm3}>
-                  <h1 className={classes.adminLabel}>Section :</h1>
-                  <Select
-                    required
-                    displayEmpty
-                    sx={{ height: 36 }}
-                    inputProps={{ "aria-label": "Without label" }}
-                    value={value.section}
-                    onChange={(e) =>
-                      setValue({ ...value, section: e.target.value })
-                    }>
-                    <MenuItem value="">None</MenuItem>
-                    <MenuItem value="1">1</MenuItem>
-                    <MenuItem value="2">2</MenuItem>
-                    <MenuItem value="3">3</MenuItem>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <div className={classes.adminFormButton}>
-              <button className={classes.adminFormSubmitButton} type="submit">
-                Submit
-              </button>
-              <button
-                onClick={() => {
-                  setValue({
-                    subjectCode: "",
-                    section: "",
-                    year: "",
-                    test: "",
-                    totalMarks: "",
-                    date: "",
-                    department: "",
-                  });
-                  setError({});
-                }}
-                className={classes.adminFormClearButton}
-                type="button">
-                Clear
-              </button>
-            </div>
-            <div className={classes.loadingAndError}>
-              {loading && (
-                <Spinner
-                  message="Creating Test"
-                  height={30}
-                  width={150}
-                  color="#111111"
-                  messageColor="blue"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2 md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Test Title <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  required
+                  value={value.test}
+                  onChange={(e) => setValue({ ...value, test: e.target.value })}
+                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  placeholder="e.g. Midterm Examination"
                 />
-              )}
-              {(error.testError || error.backendError) && (
-                <p className="text-red-500">
-                  {error.testError || error.backendError}
-                </p>
-              )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Date <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  required
+                  value={value.date}
+                  onChange={(e) => setValue({ ...value, date: e.target.value })}
+                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Maximum Marks <span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={value.totalMarks}
+                  onChange={(e) => setValue({ ...value, totalMarks: e.target.value })}
+                  className="w-full rounded-lg border-gray-300 border px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  placeholder="e.g. 100"
+                />
+              </div>
             </div>
-          </form>
-        </div>
+          </div>
+
+          <div className="p-6 sm:p-8 bg-gray-50 flex flex-col sm:flex-row items-center justify-end gap-3">
+             <button
+               type="button"
+               onClick={handleClear}
+               disabled={loading}
+               className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-600 outline-none transition-all disabled:opacity-50"
+             >
+               Clear
+             </button>
+             <button
+               type="submit"
+               disabled={loading}
+               className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-transparent text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 outline-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 min-w-[140px]"
+             >
+               {loading ? <Spinner height={20} width={20} color="#fff" /> : "Create Test"}
+             </button>
+          </div>
+
+        </form>
       </div>
     </div>
   );

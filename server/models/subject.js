@@ -14,6 +14,14 @@ const subjectSchema = new Schema({
     type: String,
     required: true,
   },
+  branch: {
+    type: Schema.Types.ObjectId,
+    ref: "branch",
+  },
+  course: {
+    type: Schema.Types.ObjectId,
+    ref: "course",
+  },
   totalLectures: {
     type: Number,
     default: 10,
@@ -25,6 +33,10 @@ const subjectSchema = new Schema({
   attendence: {
     type: Schema.Types.ObjectId,
     ref: "attendence",
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
   },
 });
 

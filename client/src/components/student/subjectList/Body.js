@@ -1,115 +1,110 @@
 import React, { useEffect, useState } from "react";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { useDispatch, useSelector } from "react-redux";
-import { getSubject } from "../../../redux/actions/adminActions";
-import { MenuItem, Select } from "@mui/material";
 import Spinner from "../../../utils/Spinner";
 import { SET_ERRORS } from "../../../redux/actionTypes";
 import * as classes from "../../../utils/styles";
+import PageHeader from "../../common/PageHeader";
+import EmptyState from "../../common/EmptyState";
 
 const Body = () => {
   const dispatch = useDispatch();
   const [error, setError] = useState({});
-  const [loading, setLoading] = useState(false);
-  const store = useSelector((state) => state);
-  const [value, setValue] = useState({
-    department: "",
-    year: "",
-  });
-  const [search, setSearch] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const errors = useSelector((state) => state.errors);
+  const subjects = useSelector((state) => state.admin.subjects);
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
       setLoading(false);
     }
-  }, [store.errors]);
+  }, [errors]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSearch(true);
-    setLoading(true);
-    setError({});
-    dispatch(getSubject(value));
-  };
-  const subjects = useSelector((state) => state.admin.subjects.result);
-
+  // `subjects` starts as [] and becomes { result: [...] } once fetched.
   useEffect(() => {
-    if (subjects?.length !== 0) setLoading(false);
+    if (subjects && !Array.isArray(subjects)) setLoading(false);
   }, [subjects]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
   }, []);
 
+  const rows = subjects?.result || [];
+  const errorMessage = error.noSubjectError || error.message;
+
   return (
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <MenuBookIcon />
-          <h1>All Subjects</h1>
-        </div>
-        <div className=" mr-10 bg-white rounded-xl pt-6 pl-6 h-[29.5rem]">
-          <div className="col-span-3 mr-6">
-            <div className={classes.loadingAndError}>
-              {loading && (
-                <Spinner
-                  message="Loading"
-                  height={50}
-                  width={150}
-                  color="#111111"
-                  messageColor="blue"
-                />
-              )}
-              {error.noSubjectError && (
-                <p className="text-red-500 text-2xl font-bold">
-                  {error.noSubjectError}
-                </p>
-              )}
-            </div>
-            {!loading &&
-              Object.keys(error).length === 0 &&
-              subjects?.length !== 0 && (
-                <div className={classes.adminData}>
-                  <div className="grid grid-cols-7">
-                    <h1 className={`${classes.adminDataHeading} col-span-1`}>
-                      Sr no.
+        <PageHeader
+          icon={MenuBookIcon}
+          title="My Subjects"
+          subtitle="Subjects for your department and year"
+        />
+        <div className="bg-white rounded-xl p-4 sm:p-6 lg:mr-10">
+          <div className={classes.loadingAndError}>
+            {loading && (
+              <Spinner
+                message="Loading"
+                height={50}
+                width={150}
+                color="#111111"
+                messageColor="blue"
+              />
+            )}
+            {errorMessage && !loading && (
+              <p className="text-red-500 font-semibold text-center">
+                {errorMessage}
+              </p>
+            )}
+          </div>
+          {!loading &&
+            !errorMessage &&
+            (rows.length ? (
+              <div className={classes.adminData}>
+                <div className="grid grid-cols-7 min-w-[32rem]">
+                  <h1 className={`${classes.adminDataHeading} col-span-1`}>
+                    Sr no.
+                  </h1>
+                  <h1 className={`${classes.adminDataHeading} col-span-2`}>
+                    Subject Code
+                  </h1>
+                  <h1 className={`${classes.adminDataHeading} col-span-3`}>
+                    Subject Name
+                  </h1>
+                  <h1 className={`${classes.adminDataHeading} col-span-1`}>
+                    Total Lectures
+                  </h1>
+                </div>
+                {rows.map((sub, idx) => (
+                  <div
+                    key={idx}
+                    className={`${classes.adminDataBody} grid-cols-7 min-w-[32rem]`}>
+                    <h1
+                      className={`col-span-1 ${classes.adminDataBodyFields}`}>
+                      {idx + 1}
                     </h1>
-                    <h1 className={`${classes.adminDataHeading} col-span-2`}>
-                      Subject Code
+                    <h1
+                      className={`col-span-2 ${classes.adminDataBodyFields}`}>
+                      {sub.subjectCode}
                     </h1>
-                    <h1 className={`${classes.adminDataHeading} col-span-3`}>
-                      Subject Name
+                    <h1
+                      className={`col-span-3 ${classes.adminDataBodyFields}`}>
+                      {sub.subjectName}
                     </h1>
-                    <h1 className={`${classes.adminDataHeading} col-span-1`}>
-                      Total Lectures
+                    <h1
+                      className={`col-span-1 ${classes.adminDataBodyFields}`}>
+                      {sub.totalLectures}
                     </h1>
                   </div>
-                  {subjects?.map((sub, idx) => (
-                    <div
-                      key={idx}
-                      className={`${classes.adminDataBody} grid-cols-7`}>
-                      <h1
-                        className={`col-span-1 ${classes.adminDataBodyFields}`}>
-                        {idx + 1}
-                      </h1>
-                      <h1
-                        className={`col-span-2 ${classes.adminDataBodyFields}`}>
-                        {sub.subjectCode}
-                      </h1>
-                      <h1
-                        className={`col-span-3 ${classes.adminDataBodyFields}`}>
-                        {sub.subjectName}
-                      </h1>
-                      <h1
-                        className={`col-span-1 ${classes.adminDataBodyFields}`}>
-                        {sub.totalLectures}
-                      </h1>
-                    </div>
-                  ))}
-                </div>
-              )}
-          </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                title="No subjects yet"
+                hint="Subjects for your department and year will appear here."
+              />
+            ))}
         </div>
       </div>
     </div>

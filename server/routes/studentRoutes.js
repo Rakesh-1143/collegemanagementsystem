@@ -6,14 +6,15 @@ import {
   testResult,
   attendance,
 } from "../controller/studentController.js";
-import auth from "../middleware/auth.js";
+import auth, { requireRole } from "../middleware/auth.js";
+import { loginLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/login", studentLogin);
-router.post("/updatepassword", auth, updatedPassword);
-router.post("/updateprofile", auth, updateStudent);
-router.post("/testresult", auth, testResult);
-router.post("/attendance", auth, attendance);
+router.post("/login", loginLimiter, studentLogin);
+router.post("/updatepassword", auth, requireRole("student"), updatedPassword);
+router.post("/updateprofile", auth, requireRole("student"), updateStudent);
+router.post("/testresult", auth, requireRole("student"), testResult);
+router.post("/attendance", auth, requireRole("student"), attendance);
 
-export default router;
+export default router;

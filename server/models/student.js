@@ -60,6 +60,14 @@ const studentSchema = new Schema({
     type: String,
     required: true,
   },
+  branch: {
+    type: Schema.Types.ObjectId,
+    ref: "branch",
+  },
+  course: {
+    type: Schema.Types.ObjectId,
+    ref: "course",
+  },
   passwordUpdated: {
     type: Boolean,
     default: false,

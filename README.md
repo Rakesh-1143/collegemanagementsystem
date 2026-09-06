@@ -3,14 +3,18 @@
 College ERP using MERN Stack
 
 # Setup
-1. Create a .env file in server folder.
-2. Copy the content of .env.example to the newly created .env file
-3. Change the MONGODB_URI to your MongoDB atlas URI
-4. Open a terminal in client folder and run "npm run start"
-5. Open another terminal in server folder and run "npm run start"
-6. Go to "localhost:3000/login/adminlogin"
-7. After successfully running the server, a dummy admin should be created.
-8. Dummy admin username = ADMDUMMY, password = 123
+1. Install Node.js 18+ and MongoDB (Atlas free cluster or MongoDB Community Server).
+2. Create a `.env` file in the `server` folder (copy `server/.env.example`).
+3. Set `CONNECTION_URL` to your MongoDB connection string and `JWT_SECRET` to a long random string.
+4. Open a terminal in the `server` folder and run `npm install` then `npm run start` (API runs on port 5001).
+5. Open another terminal in the `client` folder and run `npm install` then `npm run start` (app runs on http://localhost:3000).
+6. Go to "localhost:3000/login/adminlogin".
+7. On first start the server creates a dummy admin (development only): username = ADMDUMMY, password = 123.
+
+## Security / architecture notes
+- Sessions use an **httpOnly, sameSite cookie** (JWT). No tokens or user data are stored in the browser's localStorage; all data lives in MongoDB. The session is restored via `GET /api/me` on app load.
+- Login endpoints are rate limited; the API sends security headers (helmet), restricts CORS to `CLIENT_URL` (default http://localhost:3000), and never returns password hashes.
+- In production (`NODE_ENV=production`) the dummy admin is **not** created — insert the first admin manually in MongoDB.
 
 # TechStack
 

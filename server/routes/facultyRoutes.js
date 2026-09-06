@@ -8,18 +8,23 @@ import {
   getStudent,
   uploadMarks,
   markAttendance,
+  getMySubjects,
+  getMyStudents,
 } from "../controller/facultyController.js";
-import auth from "../middleware/auth.js";
+import auth, { requireRole } from "../middleware/auth.js";
+import { loginLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/login", facultyLogin);
-router.post("/updatepassword", auth, updatedPassword);
-router.post("/updateprofile", auth, updateFaculty);
-router.post("/createtest", auth, createTest);
-router.post("/gettest", auth, getTest);
-router.post("/getstudent", auth, getStudent);
-router.post("/uploadmarks", auth, uploadMarks);
-router.post("/markattendance", auth, markAttendance);
+router.post("/login", loginLimiter, facultyLogin);
+router.post("/updatepassword", auth, requireRole("faculty"), updatedPassword);
+router.post("/updateprofile", auth, requireRole("faculty"), updateFaculty);
+router.post("/createtest", auth, requireRole("faculty"), createTest);
+router.post("/gettest", auth, requireRole("faculty"), getTest);
+router.post("/getstudent", auth, requireRole("faculty"), getStudent);
+router.post("/uploadmarks", auth, requireRole("faculty"), uploadMarks);
+router.post("/markattendance", auth, requireRole("faculty"), markAttendance);
+router.get("/mysubjects", auth, requireRole("faculty"), getMySubjects);
+router.get("/mystudents", auth, requireRole("faculty"), getMyStudents);
 
-export default router;
+export default router;

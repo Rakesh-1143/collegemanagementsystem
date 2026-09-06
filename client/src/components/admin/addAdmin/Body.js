@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
 import EngineeringIcon from "@mui/icons-material/Engineering";
 import { useDispatch, useSelector } from "react-redux";
-import FileBase from "react-file-base64";
+import FileBase from "../../../utils/FileBase";
 import { addAdmin } from "../../../redux/actions/adminActions";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import Spinner from "../../../utils/Spinner";
 import * as classes from "../../../utils/styles";
 import { ADD_ADMIN, SET_ERRORS } from "../../../redux/actionTypes";
+import PageHeader from "../../common/PageHeader";
 
 const Body = () => {
   const dispatch = useDispatch();
-  const store = useSelector((state) => state);
+  const errors = useSelector((state) => state.errors);
+  const adminAdded = useSelector((state) => state.admin.adminAdded);
   const departments = useSelector((state) => state.admin.allDepartment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
@@ -25,11 +27,11 @@ const Body = () => {
     joiningYear: Date().split(" ")[3],
   });
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
       setValue({ ...value, email: "" });
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -39,9 +41,9 @@ const Body = () => {
   };
 
   useEffect(() => {
-    if (store.errors || store.admin.adminAdded) {
+    if (errors || adminAdded) {
       setLoading(false);
-      if (store.admin.adminAdded) {
+      if (adminAdded) {
         setValue({
           name: "",
           dob: "",
@@ -59,7 +61,7 @@ const Body = () => {
     } else {
       setLoading(true);
     }
-  }, [store.errors, store.admin.adminAdded]);
+  }, [errors, adminAdded]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
@@ -68,11 +70,8 @@ const Body = () => {
   return (
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <EngineeringIcon />
-          <h1>Add Admin</h1>
-        </div>
-        <div className=" mr-10 bg-white flex flex-col rounded-xl ">
+        <PageHeader icon={EngineeringIcon} title="Add Admin" subtitle="Create a new administrator account" />
+        <div className="bg-white flex flex-col rounded-xl lg:mr-10 ">
           <form className={classes.adminForm0} onSubmit={handleSubmit}>
             <div className={classes.adminForm1}>
               <div className={classes.adminForm2l}>
@@ -207,6 +206,11 @@ const Body = () => {
                 </p>
               )}
             </div>
+            <p className="px-6 pb-4 text-sm text-slate-500">
+              The username is auto-generated (e.g. ADM202600100). The initial
+              password is the date of birth in DD-MM-YYYY format, and the new
+              admin is asked to change it on first login.
+            </p>
           </form>
         </div>
       </div>

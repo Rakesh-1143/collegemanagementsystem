@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import AddAdmin from "./components/admin/addAdmin/AddAdmin";
-import AddDepartment from "./components/admin/addDepartment/AddDepartment";
+import { useDispatch } from "react-redux";
+import { restoreSession } from "./redux/actions/authActions";
+import GlobalSnackbar from "./components/common/GlobalSnackbar";
+import SuperAdminLogin from "./components/login/superAdminLogin/SuperAdminLogin";
+import SuperAdminHome from "./components/superAdmin/SuperAdminHome";
+import SuperAdminProfile from "./components/superAdmin/profile/Profile";
+import SuperAdminUpdate from "./components/superAdmin/profile/update/Update";
+import SuperAdminPassword from "./components/superAdmin/profile/update/password/Password";
+import SuperAdminFirstTimePassword from "./components/superAdmin/profile/update/firstTimePassword/FirstTimePassword";
+import SuperAdminAddAdmin from "./components/superAdmin/addAdmin/AddAdmin";
+import SuperAdminDeleteAdmin from "./components/superAdmin/deleteAdmin/DeleteAdmin";
+import SuperAdminManageAdmin from "./components/superAdmin/manageAdmin/ManageAdmin";
+import SuperAdminAddDepartment from "./components/superAdmin/addDepartment/AddDepartment";
+import SuperAdminManageDepartment from "./components/superAdmin/manageDepartment/ManageDepartment";
+
 import AddFaculty from "./components/admin/addFaculty/AddFaculty";
 import AddStudent from "./components/admin/addStudent/AddStudent";
 import AddSubject from "./components/admin/addSubject/AddSubject";
@@ -10,6 +23,10 @@ import AdminHome from "./components/admin/AdminHome";
 import GetFaculty from "./components/admin/getFaculty/GetFaculty";
 import GetStudent from "./components/admin/getStudent/GetStudent";
 import GetSubject from "./components/admin/getSubject/GetSubject";
+import AddBranch from "./components/admin/addBranch/AddBranch";
+import GetBranch from "./components/admin/getBranch/GetBranch";
+import AddCourse from "./components/admin/addCourse/AddCourse";
+import GetCourse from "./components/admin/getCourse/GetCourse";
 import AdminProfile from "./components/admin/profile/Profile";
 import AdminFirstTimePassword from "./components/admin/profile/update/firstTimePassword/FirstTimePassword";
 import AdminPassword from "./components/admin/profile/update/password/Password";
@@ -23,6 +40,8 @@ import FacultyFirstTimePassword from "./components/faculty/profile/update/firstT
 import FacultyPassword from "./components/faculty/profile/update/password/Password";
 import FacultyUpdate from "./components/faculty/profile/update/Update";
 import UploadMarks from "./components/faculty/uploadMarks/UploadMarks";
+import MySubjects from "./components/faculty/mySubjects/MySubjects";
+import MyStudents from "./components/faculty/myStudents/MyStudents";
 import AdminLogin from "./components/login/adminLogin/AdminLogin";
 import FacultyLogin from "./components/login/facultyLogin/FacultyLogin";
 import Login from "./components/login/Login";
@@ -36,17 +55,36 @@ import StudentPassword from "./components/student/profile/update/password/Passwo
 import SubjectList from "./components/student/subjectList/SubjectList";
 import TestResult from "./components/student/testResult/TestResult";
 import Attendance from "./components/student/attendance/Attendance";
-import DeleteAdmin from "./components/admin/deleteAdmin/DeleteAdmin";
-import DeleteDepartment from "./components/admin/deleteDepartment/DeleteDepartment";
 import DeleteFaculty from "./components/admin/deleteFaculty/DeleteFaculty";
 import DeleteStudent from "./components/admin/deleteStudent/DeleteStudent";
 import DeleteSubject from "./components/admin/deleteSubject/DeleteSubject";
 import CreateNotice from "./components/admin/createNotice/CreateNotice";
 
 const App = () => {
+  const dispatch = useDispatch();
+
+  // Restore the session from the httpOnly cookie on every page load.
+  useEffect(() => {
+    dispatch(restoreSession());
+  }, [dispatch]);
+
   return (
-    <Routes>
+    <>
+      <GlobalSnackbar />
+      <Routes>
       <Route exact path="/" element={<Login />} />
+
+      <Route path="/login/superadminlogin" element={<SuperAdminLogin />} />
+      <Route path="/superadmin/home" element={<SuperAdminHome />} />
+      <Route path="/superadmin/profile" element={<SuperAdminProfile />} />
+      <Route path="/superadmin/update" element={<SuperAdminUpdate />} />
+      <Route path="/superadmin/update/password" element={<SuperAdminPassword />} />
+      <Route path="/superadmin/updatepassword" element={<SuperAdminFirstTimePassword />} />
+      <Route path="/superadmin/addadmin" element={<SuperAdminAddAdmin />} />
+      <Route path="/superadmin/deleteadmin" element={<SuperAdminDeleteAdmin />} />
+      <Route path="/superadmin/manageadmin" element={<SuperAdminManageAdmin />} />
+      <Route path="/superadmin/adddepartment" element={<SuperAdminAddDepartment />} />
+      <Route path="/superadmin/managedepartment" element={<SuperAdminManageDepartment />} />
 
       {/* Admin  */}
 
@@ -60,10 +98,6 @@ const App = () => {
         element={<AdminFirstTimePassword />}
       />
       <Route path="/admin/createnotice" element={<CreateNotice />} />
-      <Route path="/admin/addadmin" element={<AddAdmin />} />
-      <Route path="/admin/deleteadmin" element={<DeleteAdmin />} />
-      <Route path="/admin/adddepartment" element={<AddDepartment />} />
-      <Route path="/admin/deletedepartment" element={<DeleteDepartment />} />
       <Route path="/admin/addfaculty" element={<AddFaculty />} />
       <Route path="/admin/deletefaculty" element={<DeleteFaculty />} />
       <Route path="/admin/deletestudent" element={<DeleteStudent />} />
@@ -73,6 +107,10 @@ const App = () => {
       <Route path="/admin/addsubject" element={<AddSubject />} />
       <Route path="/admin/allsubject" element={<GetSubject />} />
       <Route path="/admin/allstudent" element={<GetStudent />} />
+      <Route path="/admin/addbranch" element={<AddBranch />} />
+      <Route path="/admin/allbranch" element={<GetBranch />} />
+      <Route path="/admin/addcourse" element={<AddCourse />} />
+      <Route path="/admin/allcourse" element={<GetCourse />} />
 
       {/* Faculty  */}
 
@@ -85,6 +123,8 @@ const App = () => {
       <Route path="/faculty/createtest" element={<CreateTest />} />
       <Route path="/faculty/uploadmarks" element={<UploadMarks />} />
       <Route path="/faculty/markattendance" element={<MarkAttendance />} />
+      <Route path="/faculty/mysubjects" element={<MySubjects />} />
+      <Route path="/faculty/mystudents" element={<MyStudents />} />
 
       {/* Student  */}
 
@@ -97,7 +137,8 @@ const App = () => {
       <Route path="/student/subjectlist" element={<SubjectList />} />
       <Route path="/student/testresult" element={<TestResult />} />
       <Route path="/student/attendance" element={<Attendance />} />
-    </Routes>
+      </Routes>
+    </>
   );
 };
 

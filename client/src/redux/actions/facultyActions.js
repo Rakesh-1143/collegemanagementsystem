@@ -6,10 +6,13 @@ import {
   ADD_TEST,
   GET_TEST,
   GET_STUDENT,
+  GET_MY_SUBJECTS,
+  GET_MY_STUDENTS,
   MARKS_UPLOADED,
   ATTENDANCE_MARKED,
 } from "../actionTypes";
 import * as api from "../api";
+import { notify } from "./notificationActions";
 
 export const facultySignIn = (formData, navigate) => async (dispatch) => {
   try {
@@ -18,93 +21,95 @@ export const facultySignIn = (formData, navigate) => async (dispatch) => {
     if (data.result.passwordUpdated) navigate("/faculty/home");
     else navigate("/faculty/password");
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
 export const facultyUpdatePassword =
   (formData, navigate) => async (dispatch) => {
     try {
-      const { data } = await api.facultyUpdatePassword(formData);
+      await api.facultyUpdatePassword(formData);
       dispatch({ type: UPDATE_PASSWORD, payload: true });
-      alert("Password Updated");
+      dispatch(notify("Password updated successfully", "success"));
       navigate("/faculty/home");
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };
 
 export const updateFaculty = (formData) => async (dispatch) => {
   try {
-    const { data } = await api.updateFaculty(formData);
+    await api.updateFaculty(formData);
     dispatch({ type: UPDATE_FACULTY, payload: true });
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
+  }
+};
+
+export const getMySubjects = () => async (dispatch) => {
+  try {
+    const { data } = await api.getMySubjects();
+    dispatch({ type: GET_MY_SUBJECTS, payload: data.result });
+  } catch (error) {
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong." } });
+  }
+};
+
+export const getMyStudents = () => async (dispatch) => {
+  try {
+    const { data } = await api.getMyStudents();
+    dispatch({ type: GET_MY_STUDENTS, payload: data.result });
+  } catch (error) {
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong." } });
   }
 };
 
 export const createTest = (formData) => async (dispatch) => {
   try {
-    const { data } = await api.createTest(formData);
-    alert("Test Created Successfully");
-
+    await api.createTest(formData);
+    dispatch(notify("Test created successfully", "success"));
     dispatch({ type: ADD_TEST, payload: true });
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
-export const getTest = (formData) => async (dispatch) => {
+export const getTest = () => async (dispatch) => {
   try {
-    const { data } = await api.getTest(formData);
+    const { data } = await api.getTest();
     dispatch({ type: GET_TEST, payload: data });
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
-  }
-};
-
-export const getStudent = (formData) => async (dispatch) => {
-  try {
-    const { data } = await api.getMarksStudent(formData);
-    dispatch({ type: GET_STUDENT, payload: data });
-  } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
 export const uploadMark =
-  (marks, department, section, year, test) => async (dispatch) => {
+  (marks, test) => async (dispatch) => {
     try {
       const formData = {
         marks,
-        department,
-        section,
-        year,
         test,
       };
-      const { data } = await api.uploadMarks(formData);
-      alert("Marks Uploaded Successfully");
+      await api.uploadMarks(formData);
+      dispatch(notify("Marks uploaded successfully", "success"));
       dispatch({ type: MARKS_UPLOADED, payload: true });
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };
 
 export const markAttendance =
-  (checkedValue, subjectName, department, year, section) =>
+  (checkedValue, date) =>
   async (dispatch) => {
     try {
       const formData = {
         selectedStudents: checkedValue,
-        subjectName,
-        department,
-        year,
-        section,
+        date,
       };
-      const { data } = await api.markAttendance(formData);
-      alert("Attendance Marked Successfully");
+      await api.markAttendance(formData);
+      dispatch(notify("Attendance marked successfully", "success"));
       dispatch({ type: ATTENDANCE_MARKED, payload: true });
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };

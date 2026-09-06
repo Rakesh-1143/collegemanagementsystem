@@ -1,19 +1,14 @@
 import React from "react";
 import Body from "./Body";
 
-import Header from "../../../Header";
-
 const FirstTimePassword = () => {
   return (
-    <div className="bg-[#d6d9e0] h-screen flex items-center justify-center">
-      <div className="flex flex-col  bg-[#f4f6fa] h-5/6 w-[95%] rounded-2xl shadow-2xl space-y-6 ">
-        <Header />
-        <div className="flex flex-[0.95] w-full">
-          <Body />
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-[#d6d9e0] p-4">
+      <div className="my-8 w-full max-w-md rounded-2xl bg-[#f4f6fa] p-5 shadow-2xl sm:p-8">
+        <Body />
       </div>
     </div>
   );
 };
 
-export default FirstTimePassword;
+export default FirstTimePassword;

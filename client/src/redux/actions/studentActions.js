@@ -8,6 +8,7 @@ import {
   GET_SUBJECT,
 } from "../actionTypes";
 import * as api from "../api";
+import { notify } from "./notificationActions";
 
 export const studentSignIn = (formData, navigate) => async (dispatch) => {
   try {
@@ -16,28 +17,28 @@ export const studentSignIn = (formData, navigate) => async (dispatch) => {
     if (data.result.passwordUpdated) navigate("/student/home");
     else navigate("/student/password");
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
 export const studentUpdatePassword =
   (formData, navigate) => async (dispatch) => {
     try {
-      const { data } = await api.studentUpdatePassword(formData);
+      await api.studentUpdatePassword(formData);
       dispatch({ type: UPDATE_PASSWORD, payload: true });
-      alert("Password Updated");
+      dispatch(notify("Password updated successfully", "success"));
       navigate("/student/home");
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };
 
 export const updateStudent = (formData) => async (dispatch) => {
   try {
-    const { data } = await api.updateStudent(formData);
+    await api.updateStudent(formData);
     dispatch({ type: UPDATE_STUDENT, payload: true });
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
@@ -50,7 +51,7 @@ export const getSubject = (department, year) => async (dispatch) => {
     const { data } = await api.getSubject(formData);
     dispatch({ type: GET_SUBJECT, payload: data });
   } catch (error) {
-    dispatch({ type: SET_ERRORS, payload: error.response.data });
+    dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
   }
 };
 
@@ -65,7 +66,7 @@ export const getTestResult =
       const { data } = await api.getTestResult(formData);
       dispatch({ type: TEST_RESULT, payload: data });
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };
 
@@ -80,6 +81,6 @@ export const getAttendance =
       const { data } = await api.getAttendance(formData);
       dispatch({ type: ATTENDANCE, payload: data });
     } catch (error) {
-      dispatch({ type: SET_ERRORS, payload: error.response.data });
+      dispatch({ type: SET_ERRORS, payload: error.response?.data || { backendError: "Something went wrong. Please try again." } });
     }
   };

@@ -1,3 +1,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Guard against accidental page-level horizontal scroll; scrollable content
+   (tables, code) scrolls inside their own containers instead. */
+body {
+  overflow-x: hidden;
+  background-color: #f8fafc;
+}
+
+/* Keep native date/select inputs a comfortable touch size */
+input[type="date"],
+input[type="time"],
+select {
+  min-height: 2.25rem;
+}
+
+::selection {
+  background-color: rgba(124, 58, 237, 0.18);
+}

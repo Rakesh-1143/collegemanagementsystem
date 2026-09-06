@@ -17,6 +17,12 @@ const attendenceSchema = new Schema({
     type: Number,
     default: 0,
   },
+  history: [
+    {
+      date: { type: String, required: true },
+      present: { type: Boolean, required: true },
+    }
+  ],
 });
 
 export default mongoose.model("attendance", attendenceSchema);

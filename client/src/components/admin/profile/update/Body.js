@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SecurityUpdateIcon from "@mui/icons-material/SecurityUpdate";
-import FileBase from "react-file-base64";
+import FileBase from "../../../../utils/FileBase";
 import { useDispatch, useSelector } from "react-redux";
 import { updateAdmin } from "../../../../redux/actions/adminActions";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -8,30 +8,33 @@ import { useNavigate } from "react-router-dom";
 import { MenuItem, Select } from "@mui/material";
 import Spinner from "../../../../utils/Spinner";
 import { SET_ERRORS } from "../../../../redux/actionTypes";
+import { notify } from "../../../../redux/actions/notificationActions";
 import * as classes from "../../../../utils/styles";
 
 const Body = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.admin.authData);
+  const result = user?.result || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const store = useSelector((state) => state);
+  const errors = useSelector((state) => state.errors);
+  const updatedAdmin = useSelector((state) => state.admin.updatedAdmin);
   const departments = useSelector((state) => state.admin.allDepartment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const [value, setValue] = useState({
     name: "",
     dob: "",
-    email: user.result.email,
+    email: result.email,
     department: "",
     contactNumber: "",
     avatar: "",
   });
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,22 +47,21 @@ const Body = () => {
       value.contactNumber === "" &&
       value.avatar === ""
     ) {
-      alert("Enter atleast one value");
+      dispatch(notify("Enter at least one value to update", "warning"));
       setLoading(false);
     } else {
-      dispatch(updateAdmin(value, navigate));
-
-      alert("Kindly login again to see updates");
+      dispatch(updateAdmin(value));
+      dispatch(notify("Profile updated. Log in again to see the changes.", "info"));
     }
   };
 
   useEffect(() => {
-    if (store.errors || store.admin.updatedAdmin) {
+    if (errors || updatedAdmin) {
       setLoading(false);
     } else {
       setLoading(true);
     }
-  }, [store.errors, store.admin.updatedAdmin]);
+  }, [errors, updatedAdmin]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
@@ -82,14 +84,14 @@ const Body = () => {
           </div>
         </div>
 
-        <div className=" mr-10 bg-white flex flex-col rounded-xl ">
+        <div className="bg-white flex flex-col rounded-xl lg:mr-10 ">
           <form className={classes.adminForm0} onSubmit={handleSubmit}>
             <div className={classes.adminForm1}>
               <div className={classes.adminForm2l}>
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Name :</h1>
                   <input
-                    placeholder={user.result?.name}
+                    placeholder={result?.name}
                     className={classes.adminInput}
                     type="text"
                     value={value.name}
@@ -102,7 +104,7 @@ const Body = () => {
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>DOB :</h1>
                   <input
-                    placeholder={user.result?.dob}
+                    placeholder={result?.dob}
                     className={classes.adminInput}
                     type="text"
                     value={value.dob}
@@ -115,7 +117,7 @@ const Body = () => {
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Email :</h1>
                   <input
-                    placeholder={user.result?.email}
+                    placeholder={result?.email}
                     disabled
                     className={classes.adminInput}
                     type="text"
@@ -146,7 +148,7 @@ const Body = () => {
                 <div className={classes.adminForm3}>
                   <h1 className={classes.adminLabel}>Contact Number :</h1>
                   <input
-                    placeholder={user.result?.contactNumber}
+                    placeholder={result?.contactNumber}
                     className={classes.adminInput}
                     type="text"
                     value={value.contactNumber}

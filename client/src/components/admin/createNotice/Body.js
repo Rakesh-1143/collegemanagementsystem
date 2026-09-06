@@ -7,11 +7,12 @@ import MenuItem from "@mui/material/MenuItem";
 import Spinner from "../../../utils/Spinner";
 import * as classes from "../../../utils/styles";
 import { CREATE_NOTICE, SET_ERRORS } from "../../../redux/actionTypes";
+import PageHeader from "../../common/PageHeader";
 
 const Body = () => {
   const dispatch = useDispatch();
-  const store = useSelector((state) => state);
-  const departments = useSelector((state) => state.admin.allDepartment);
+  const errors = useSelector((state) => state.errors);
+  const noticeCreated = useSelector((state) => state.admin.noticeCreated);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({});
   const [value, setValue] = useState({
@@ -22,11 +23,11 @@ const Body = () => {
     from: "",
   });
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
       setValue({ date: "", noticeFor: "", topic: "", content: "", from: "" });
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,9 +37,9 @@ const Body = () => {
   };
 
   useEffect(() => {
-    if (store.errors || store.admin.noticeCreated) {
+    if (errors || noticeCreated) {
       setLoading(false);
-      if (store.admin.noticeCreated) {
+      if (noticeCreated) {
         setValue({
           date: "",
           noticeFor: "",
@@ -52,7 +53,7 @@ const Body = () => {
     } else {
       setLoading(true);
     }
-  }, [store.errors, store.admin.noticeCreated]);
+  }, [errors, noticeCreated]);
 
   useEffect(() => {
     dispatch({ type: SET_ERRORS, payload: {} });
@@ -61,11 +62,12 @@ const Body = () => {
   return (
     <div className="flex-[0.8] mt-3">
       <div className="space-y-5">
-        <div className="flex text-gray-400 items-center space-x-2">
-          <EngineeringIcon />
-          <h1>Create Notice</h1>
-        </div>
-        <div className=" mr-10 bg-white flex flex-col rounded-xl ">
+        <PageHeader
+          icon={EngineeringIcon}
+          title="Create Notice"
+          subtitle="Publish a notice to faculty or students"
+        />
+        <div className="bg-white flex flex-col rounded-xl lg:mr-10 ">
           <form className={classes.adminForm0} onSubmit={handleSubmit}>
             <div className={classes.adminForm1}>
               <div className={classes.adminForm2l}>

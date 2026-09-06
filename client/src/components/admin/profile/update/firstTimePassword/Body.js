@@ -12,17 +12,16 @@ const Body = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState({});
   const [loading, setLoading] = useState(false);
-  const store = useSelector((state) => state);
+  const errors = useSelector((state) => state.errors);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    if (Object.keys(store.errors).length !== 0) {
-      setError(store.errors);
+    if (Object.keys(errors).length !== 0) {
+      setError(errors);
       setLoading(false);
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const update = (e) => {
     e.preventDefault();
@@ -33,7 +32,6 @@ const Body = () => {
         {
           newPassword: newPassword,
           confirmPassword: confirmPassword,
-          email: user.result.email,
         },
         navigate
       )
@@ -41,15 +39,15 @@ const Body = () => {
   };
 
   useEffect(() => {
-    if (store.errors) {
+    if (errors) {
       setLoading(false);
       setNewPassword("");
       setConfirmPassword("");
     }
-  }, [store.errors]);
+  }, [errors]);
 
   return (
-    <div className="flex flex-col items-center w-full space-y-10 mt-24">
+    <div className="flex w-full flex-col items-center space-y-8 py-4">
       <form onSubmit={update} className="flex flex-col space-y-6 items-center">
         <h1 className="text-black text-3xl font-bold">Update Password</h1>
         <div className="space-y-1">
@@ -114,9 +112,9 @@ const Body = () => {
             messageColor="#blue"
           />
         )}
-        {(error.mismatchError || error.backendError) && (
+        {(error.mismatchError || error.backendError || error.passwordError) && (
           <p className="text-red-500">
-            {error.mismatchError || error.backendError}
+            {error.mismatchError || error.backendError || error.passwordError}
           </p>
         )}
       </form>

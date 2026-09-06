@@ -7,26 +7,19 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import Spinner from "../../../utils/Spinner";
 
 const AdminLogin = () => {
-  const [translate, setTranslate] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const store = useSelector((state) => state);
+  const errors = useSelector((state) => state.errors);
   const [error, setError] = useState({});
   useEffect(() => {
-    setTimeout(() => {
-      setTranslate(true);
-    }, 1000);
-  }, []);
-
-  useEffect(() => {
-    if (store.errors) {
-      setError(store.errors);
+    if (errors) {
+      setError(errors);
     }
-  }, [store.errors]);
+  }, [errors]);
 
   const login = (e) => {
     e.preventDefault();
@@ -35,20 +28,18 @@ const AdminLogin = () => {
   };
 
   useEffect(() => {
-    if (store.errors) {
+    if (errors) {
       setLoading(false);
       setUsername("");
       setPassword("");
     }
-  }, [store.errors]);
+  }, [errors]);
+
   return (
-    <div className="bg-[#04bd7d] h-screen w-screen flex items-center justify-center">
-      <div className="grid grid-cols-2">
-        <div
-          className={`h-96 w-96 bg-white flex items-center justify-center ${
-            translate ? "translate-x-[12rem]" : ""
-          }  duration-1000 transition-all rounded-3xl shadow-2xl`}>
-          <h1 className="text-[3rem]  font-bold text-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#04bd7d] p-4">
+      <div className="grid w-full max-w-4xl grid-cols-1 items-center justify-items-center gap-6 md:grid-cols-2 md:gap-0">
+        <div className="hidden h-80 w-80 flex-col items-center justify-center rounded-3xl bg-white shadow-2xl xl:h-96 xl:w-96 md:flex">
+          <h1 className="text-center text-[3rem] font-bold">
             Admin
             <br />
             Login
@@ -56,34 +47,32 @@ const AdminLogin = () => {
         </div>
         <form
           onSubmit={login}
-          className={`${
-            loading ? "h-[27rem]" : "h-96"
-          } w-96 bg-[#2c2f35] flex flex-col items-center justify-center ${
-            translate ? "-translate-x-[12rem]" : ""
-          }  duration-1000 transition-all space-y-6 rounded-3xl shadow-2xl`}>
-          <h1 className="text-white text-3xl font-semibold">Admin</h1>
+          className="w-full max-w-sm space-y-6 rounded-3xl bg-[#2c2f35] p-6 shadow-2xl sm:p-8">
+          <h1 className="text-center text-3xl font-semibold text-white">
+            Admin
+          </h1>
           <div className="space-y-1">
-            <p className="text-[#515966] font-bold text-sm">Username</p>
-            <div className="bg-[#515966] rounded-lg w-[14rem] flex  items-center">
+            <p className="text-sm font-bold text-[#515966]">Username</p>
+            <div className="flex w-full items-center rounded-lg bg-[#515966]">
               <input
                 onChange={(e) => setUsername(e.target.value)}
                 value={username}
                 type="text"
                 required
-                className="bg-[#515966] text-white px-2 outline-none py-2 rounded-lg placeholder:text-sm"
+                className="w-full rounded-lg bg-[#515966] px-3 py-2 text-white outline-none placeholder:text-sm"
                 placeholder="Username"
               />
             </div>
           </div>
           <div className="space-y-1">
-            <p className="text-[#515966] font-bold text-sm">Password</p>
-            <div className="bg-[#515966] rounded-lg px-2 flex  items-center">
+            <p className="text-sm font-bold text-[#515966]">Password</p>
+            <div className="flex w-full items-center rounded-lg bg-[#515966] px-3">
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 required
                 type={showPassword ? "text" : "password"}
-                className=" bg-[#515966] text-white rounded-lg outline-none py-2  placeholder:text-sm"
+                className="w-full rounded-lg bg-[#515966] py-2 text-white outline-none placeholder:text-sm"
                 placeholder="Password"
               />
               {showPassword ? (
@@ -101,7 +90,7 @@ const AdminLogin = () => {
           </div>
           <button
             type="submit"
-            className="w-32 hover:scale-105 transition-all duration-150 rounded-lg flex items-center justify-center text-white text-base py-1 bg-[#04bd7d]">
+            className="flex h-9 w-32 items-center justify-center rounded-lg bg-[#04bd7d] text-base text-white transition-all duration-150 hover:scale-105">
             Login
           </button>
           {loading && (
@@ -124,4 +113,4 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin;
+export default AdminLogin;

@@ -3,9 +3,12 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import SecurityUpdateIcon from "@mui/icons-material/SecurityUpdate";
 import { Avatar } from "@mui/material";
 import Data from "./Data";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
 const Body = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useSelector((state) => state.student.authData);
+  const result = user?.result || {};
   const navigate = useNavigate();
   return (
     <div className="flex-[0.8] mt-3">
@@ -24,31 +27,31 @@ const Body = () => {
         </div>
         <div className="w-[98%] bg-white relative rounded-xl  ">
           <div className="absolute left-[50%] top-[-10%] ">
-            <Avatar src={user.result.avatar} sx={{ width: 70, height: 70 }} />
+            <Avatar src={result.avatar} sx={{ width: 70, height: 70 }} />
           </div>
-          <div className="overflow-y-scroll h-[27rem]">
-            <div className="flex py-10 ml-10 space-x-40 ">
-              <div className="flex flex-col space-y-10">
-                <Data label="Name" value={user.result.name} />
-                <Data label="Email" value={user.result.email} />
-                <Data label="Username" value={user.result.username} />
-                <Data label="Department" value={user.result.department} />
-                <Data label="Father's Name" value={user.result.fatherName} />
-                <Data label="Mother's Name" value={user.result.motherName} />
+          <div className="overflow-y-auto lg:h-[27rem]">
+            <div className="flex flex-col space-y-8 py-8 md:ml-10 md:flex-row md:space-x-40 md:space-y-0 md:py-10">
+              <div className="flex flex-col space-y-6 md:space-y-10">
+                <Data label="Name" value={result.name} />
+                <Data label="Email" value={result.email} />
+                <Data label="Username" value={result.username} />
+                <Data label="Department" value={result.department} />
+                <Data label="Father's Name" value={result.fatherName} />
+                <Data label="Mother's Name" value={result.motherName} />
               </div>
-              <div className="flex flex-col space-y-10 ">
-                <Data label="DOB" value={user.result.dob} />
-                <Data label="Year" value={user.result.year} />
+              <div className="flex flex-col space-y-6 md:space-y-10 ">
+                <Data label="DOB" value={result.dob} />
+                <Data label="Year" value={result.year} />
                 <Data
                   label="Contact Number"
-                  value={user.result.contactNumber}
+                  value={result.contactNumber}
                 />
-                <Data label="Section" value={user.result.section} />
+                <Data label="Section" value={result.section} />
                 <Data
                   label="Father's Contact Number"
-                  value={user.result.fatherContactNumber}
+                  value={result.fatherContactNumber}
                 />
-                <Data label="Batch" value={user.result.batch} />
+                <Data label="Batch" value={result.batch} />
               </div>
             </div>
           </div>{" "}

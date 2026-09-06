@@ -1,9 +1,28 @@
 import React from "react";
-import { Circles } from "react-loader-spinner";
-const Spinner = ({ message, height, width, color, messageColor }) => {
+
+// Dependency-free replacement for react-loader-spinner (which does not peer
+// support React 19). Keeps the same props interface used across the app.
+const Spinner = ({
+  message,
+  height = 50,
+  width,
+  color = "#111111",
+  messageColor = "blue",
+}) => {
+  const size = Number(height) || 50;
   return (
     <div className="flex flex-col justify-center items-center w-full">
-      <Circles color={color} height={height} width={width} className="m-5" />
+      <div
+        role="status"
+        aria-label={message || "Loading"}
+        className="rounded-full animate-spin m-5"
+        style={{
+          width: size,
+          height: size,
+          border: "4px solid rgba(128,128,128,0.2)",
+          borderTopColor: color,
+        }}
+      />
       <p style={{ color: messageColor }} className="text-lg text-center px-2">
         {message}
       </p>
@@ -11,4 +30,4 @@ const Spinner = ({ message, height, width, color, messageColor }) => {
   );
 };
 
-export default Spinner;
+export default Spinner;
