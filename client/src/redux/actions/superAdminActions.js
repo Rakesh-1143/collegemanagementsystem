@@ -18,10 +18,14 @@ import {
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
+import { setToken } from "../token";
 
 export const superAdminSignIn = (formData, navigate) => async (dispatch) => {
   try {
     const { data } = await api.superAdminSignIn(formData);
+    // Persist the JWT for Authorization-header auth on later requests.
+    setToken(data?.token);
+    delete data.token;
     dispatch({ type: SUPER_ADMIN_LOGIN, data });
     if (data.result.passwordUpdated) navigate("/superadmin/home");
     else navigate("/superadmin/update/password");

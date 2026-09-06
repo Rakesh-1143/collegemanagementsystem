@@ -10,10 +10,14 @@ import {
 } from "../actionTypes";
 import * as api from "../api";
 import { notify } from "./notificationActions";
+import { setToken } from "../token";
 
 export const studentSignIn = (formData, navigate) => async (dispatch) => {
   try {
     const { data } = await api.studentSignIn(formData);
+    // Persist the JWT for Authorization-header auth on later requests.
+    setToken(data?.token);
+    delete data.token;
     dispatch({ type: STUDENT_LOGIN, data });
     if (data.result.passwordUpdated) navigate("/student/home");
     else navigate("/student/password");

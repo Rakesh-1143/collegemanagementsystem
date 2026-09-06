@@ -1,6 +1,7 @@
 import axios from "axios";
 import store from "../store";
 import { LOGOUT } from "../actionTypes";
+import { getToken, clearToken } from "../token";
 
 // Base URL is configurable via REACT_APP_SERVER_URL (see client/.env.example).
 const API = axios.create({
@@ -16,6 +17,12 @@ let sessionStartedAt = 0;
 
 API.interceptors.request.use((config) => {
   config.startedAt = Date.now();
+  // Cross-site-safe auth: the session JWT rides in an Authorization header
+  // (works even when the browser blocks the third-party httpOnly cookie).
+  const token = getToken();
+  if (token) {
+    config.headers = { ...config.headers, Authorization: `Bearer ${token}` };
+  }
   return config;
 });
 
@@ -41,6 +48,7 @@ API.interceptors.response.use(
       !url.includes("/login") &&
       (error.config?.startedAt || 0) > sessionStartedAt
     ) {
+      clearToken();
       store.dispatch({ type: LOGOUT });
     }
     return Promise.reject(error);

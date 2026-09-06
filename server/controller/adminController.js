@@ -82,7 +82,9 @@ export const adminLogin = async (req, res) => {
     const token = createAuthToken(existingAdmin._id, existingAdmin.email, "admin");
     setAuthCookie(res, token);
 
-    res.status(200).json({ result: sanitizeUser(existingAdmin) });
+    // Token is also returned in the body for Authorization-header auth (some
+    // browsers block the cross-site httpOnly session cookie).
+    res.status(200).json({ result: sanitizeUser(existingAdmin), token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });

@@ -1,6 +1,7 @@
 import * as api from "../api";
 import { GET_ME, LOGOUT } from "../actionTypes";
 import store from "../store";
+import { clearToken } from "../token";
 
 // Called once on app load. Restores the logged-in user from the httpOnly
 // session cookie (data itself always lives in MongoDB).
@@ -20,6 +21,7 @@ export const restoreSession = () => async (dispatch) => {
       (role) => !!state[role]?.authData
     );
     if (!hasLiveSession) {
+      clearToken();
       dispatch({ type: LOGOUT });
     }
   }
@@ -31,5 +33,6 @@ export const logOut = () => async (dispatch) => {
   } catch (error) {
     // The cookie may already be invalid — ignore.
   }
+  clearToken();
   dispatch({ type: LOGOUT });
 };

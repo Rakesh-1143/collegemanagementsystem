@@ -38,7 +38,9 @@ export const facultyLogin = async (req, res) => {
     );
     setAuthCookie(res, token);
 
-    res.status(200).json({ result: sanitizeUser(existingFaculty) });
+    // Token is also returned in the body for Authorization-header auth (some
+    // browsers block the cross-site httpOnly session cookie).
+    res.status(200).json({ result: sanitizeUser(existingFaculty), token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });

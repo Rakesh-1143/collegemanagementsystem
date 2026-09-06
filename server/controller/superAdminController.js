@@ -61,7 +61,11 @@ export const superAdminLogin = async (req, res) => {
     const token = createAuthToken(existingSuperAdmin._id, existingSuperAdmin.email, "superadmin");
     setAuthCookie(res, token);
 
-    res.status(200).json({ result: sanitizeUser(existingSuperAdmin) });
+    // The token is also returned in the body so the client can authenticate
+    // with an Authorization header. Some browsers block the cross-site
+    // httpOnly cookie (frontend/backend live on different *.onrender.com
+    // sites), and a header always works regardless of cookie policy.
+    res.status(200).json({ result: sanitizeUser(existingSuperAdmin), token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ backendError: "Something went wrong" });
