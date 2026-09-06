@@ -6,8 +6,12 @@ export const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour, matches the JWT expiry
 
 const cookieOptions = {
   httpOnly: true, // never readable from client-side JS
-  sameSite: "lax",
-  secure: IS_PRODUCTION, // only sent over HTTPS in production
+  // In production the front-end and back-end are on different subdomains
+  // (e.g. *-frontend.onrender.com vs *-backend.onrender.com).
+  // Cross-origin cookies require SameSite=None + Secure=true.
+  // In development keep "lax" so it works on plain http://localhost.
+  sameSite: IS_PRODUCTION ? "none" : "lax",
+  secure: IS_PRODUCTION, // SameSite=None requires Secure
   maxAge: TOKEN_TTL_MS,
   path: "/",
 };
@@ -21,7 +25,7 @@ export const setAuthCookie = (res, token) =>
 export const clearAuthCookie = (res) =>
   res.clearCookie(AUTH_COOKIE, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: IS_PRODUCTION ? "none" : "lax",
     secure: IS_PRODUCTION,
     path: "/",
   });

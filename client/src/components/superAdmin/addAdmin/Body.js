@@ -169,9 +169,13 @@ const Body = () => {
                   messageColor="blue"
                 />
               )}
-              {(error.emailError || error.backendError) && (
+              {/* Show any error key the backend returns */}
+              {Object.keys(error).length > 0 && (
                 <p className="text-red-500">
-                  {error.emailError || error.backendError}
+                  {error.emailError ||
+                    error.backendError ||
+                    error.departmentError ||
+                    Object.values(error)[0]}
                 </p>
               )}
             </div>
