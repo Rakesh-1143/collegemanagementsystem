@@ -1,10 +1,29 @@
 import axios from "axios";
+import store from "../store";
+import { LOGOUT } from "../actionTypes";
 
 // Base URL is configurable via REACT_APP_SERVER_URL (see client/.env.example).
 const API = axios.create({
   baseURL: process.env.REACT_APP_SERVER_URL || "http://localhost:5001/",
   withCredentials: true, // send/receive the httpOnly auth cookie
 });
+
+// When any authenticated request comes back 401 the session cookie is
+// missing, expired, or invalid. Clear the client-side session so the route
+// guards redirect to the login page instead of leaving the user on a
+// protected page staring at a cryptic "Unauthenticated" error.
+// Login requests are excluded (wrong credentials are a normal 401/404).
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url || "";
+    if (status === 401 && !url.includes("/login")) {
+      store.dispatch({ type: LOGOUT });
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Session (cookie based)
 export const fetchMe = () => API.get("/api/me");

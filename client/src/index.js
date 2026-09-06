@@ -3,14 +3,10 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { Provider } from "react-redux";
-import { createStore, applyMiddleware, compose } from "redux";
 import { BrowserRouter as Router } from "react-router-dom";
-import reducers from "./redux/reducers";
-import { thunk } from "redux-thunk";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
-
-const store = createStore(reducers, compose(applyMiddleware(thunk)));
+import store from "./redux/store";
 
 // Belt-and-suspenders: filter React Router's dev-only "Future Flag" warnings.
 // The app already opts in via <BrowserRouter future={{ ... }}> below; this
