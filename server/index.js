@@ -65,12 +65,16 @@ mongoose
     serverSelectionTimeoutMS: 10000,
   })
   .then(async () => {
+    // Always seed the SuperAdmin account (the function is idempotent –
+    // it skips creation if the record already exists in MongoDB).
+    await addDummySuperAdmin();
+
     if (!IS_PRODUCTION) {
+      // Only seed dummy Admins in development / staging.
       await addDummyAdmin();
-      await addDummySuperAdmin();
     } else {
       console.log(
-        "Production mode: skipping dummy admin creation. Insert the first admin into MongoDB manually."
+        "Production mode: dummy Admin seeding skipped. Add admins via the Super Admin dashboard."
       );
     }
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
